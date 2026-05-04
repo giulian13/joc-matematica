@@ -317,7 +317,9 @@ export default function App() {
 
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
-      setDbLoading(false);
+      if (!u) {
+        setDbLoading(false); // Oprim ecranul de loading doar dacă nu e nimeni logat (afișăm meniul de login)
+      }
     });
 
     const initAuth = async () => {
@@ -343,7 +345,12 @@ export default function App() {
 
   // 2. Descărcarea Salvării (Când aplicația se deschide)
   useEffect(() => {
-    if (!user || !db) return;
+    if (!user || !db) {
+      isDataLoaded.current = false;
+      return;
+    }
+
+    isDataLoaded.current = false; // Resetăm starea la fiecare conectare nouă
 
     const docRef = doc(
       db,
@@ -365,16 +372,24 @@ export default function App() {
             setInventory(data.inventory ?? []);
             setShopItems(data.shopItems ?? INITIAL_SHOP_ITEMS);
             setHomework(data.homework ?? []);
+          } else {
+            // Cont nou - resetăm datele complet pentru a preveni importarea progresului anterior
+            setPoints(0);
+            setHistory([]);
+            setInventory([]);
+            setShopItems(INITIAL_SHOP_ITEMS);
+            setHomework([]);
           }
           isDataLoaded.current = true;
+          setDbLoading(false); // ASCUNDEM ECRANUL DE LOADING DOAR DUPĂ CE AM PUS DATELE
         }
-        setDbLoading(false);
       },
       (error) => {
         console.error("Eroare la citirea datelor:", error);
         setDbLoading(false);
       },
     );
+
     return () => unsubscribe();
   }, [user]);
 
@@ -396,8 +411,8 @@ export default function App() {
         docRef,
         { points, history, inventory, shopItems, homework },
         { merge: true },
-      );
-    }, 1000); // Salvează la 1 secundă după ce s-a terminat acțiunea (pentru a nu bloca internetul)
+      ).catch((err) => console.error("Eroare Firebase la salvare:", err));
+    }, 1000);
 
     return () => clearTimeout(timer);
   }, [points, history, inventory, shopItems, homework, user]);
