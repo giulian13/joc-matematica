@@ -28,6 +28,9 @@ import {
   signInWithCustomToken,
   signInAnonymously,
   onAuthStateChanged,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
 } from "firebase/auth";
 import { getFirestore, doc, setDoc, onSnapshot } from "firebase/firestore";
 
@@ -106,6 +109,131 @@ const INITIAL_SHOP_ITEMS = [
   },
 ];
 
+function AuthScreen() {
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      if (isLogin) {
+        await signInWithEmailAndPassword(auth, email, password);
+      } else {
+        await createUserWithEmailAndPassword(auth, email, password);
+      }
+    } catch (err) {
+      setError(
+        err.message.includes("auth/")
+          ? "Email sau parolă incorectă / invalidă."
+          : err.message,
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAnonymous = async () => {
+    setLoading(true);
+    try {
+      await signInAnonymously(auth);
+    } catch (err) {
+      setError("Eroare la conectare.");
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-sky-300 via-sky-100 to-indigo-100 flex items-center justify-center p-4 font-sans text-slate-800">
+      <div className="bg-white p-8 rounded-[3rem] shadow-2xl w-full max-w-md relative z-10 animate-fade-in border-4 border-white">
+        <div className="text-6xl text-center mb-4 animate-bounce">😺</div>
+        <h2 className="text-3xl font-black text-center text-blue-800 mb-6 drop-shadow-sm">
+          Aventura Matematică
+        </h2>
+
+        {error && (
+          <div className="bg-red-100 text-red-700 p-3 rounded-xl mb-4 text-sm font-bold text-center border-2 border-red-200">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-bold text-slate-600 mb-1">
+              Email părinte
+            </label>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full p-4 border-4 border-slate-100 rounded-2xl focus:border-blue-400 focus:outline-none font-bold text-slate-700"
+              placeholder="parinte@email.com"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-bold text-slate-600 mb-1">
+              Parolă
+            </label>
+            <input
+              type="password"
+              required
+              minLength={6}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full p-4 border-4 border-slate-100 rounded-2xl focus:border-blue-400 focus:outline-none font-bold text-slate-700"
+              placeholder="******"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-gradient-to-b from-blue-400 to-blue-500 hover:from-blue-300 hover:to-blue-400 border-4 border-blue-600 text-white font-black py-4 rounded-2xl transition-all shadow-[0_6px_0_0_#1e3a8a] active:translate-y-1 active:shadow-none mt-2"
+          >
+            {loading ? (
+              <Loader2 className="animate-spin mx-auto" size={24} />
+            ) : isLogin ? (
+              "Intră în cont"
+            ) : (
+              "Creează cont nou"
+            )}
+          </button>
+        </form>
+
+        <div className="mt-6 text-center">
+          <button
+            type="button"
+            onClick={() => setIsLogin(!isLogin)}
+            className="text-sm font-bold text-blue-600 hover:text-blue-800 underline"
+          >
+            {isLogin
+              ? "Nu ai cont? Creează unul gratuit."
+              : "Ai deja cont? Loghează-te."}
+          </button>
+        </div>
+
+        <div className="mt-8 pt-6 border-t-4 border-slate-100 text-center">
+          <button
+            type="button"
+            onClick={handleAnonymous}
+            disabled={loading}
+            className="w-full bg-slate-200 hover:bg-slate-300 text-slate-600 font-black py-4 rounded-2xl transition-all border-4 border-slate-300 active:translate-y-1 active:border-b-0"
+          >
+            Joacă ca Vizitator (Fără cont)
+          </button>
+          <p className="text-xs text-slate-400 font-bold mt-3">
+            Vizitatorii salvează progresul doar pe acest dispozitiv.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [view, setView] = useState("menu");
   const [points, setPoints] = useState(0);
@@ -126,6 +254,11 @@ export default function App() {
       return;
     }
 
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+      setDbLoading(false);
+    });
+
     const initAuth = async () => {
       try {
         if (
@@ -133,7 +266,8 @@ export default function App() {
           __initial_auth_token
         ) {
           await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
+        } else if (typeof __initial_auth_token !== "undefined") {
+          // Rulează logarea anonimă automată DOAR pe platforma Canvas
           await signInAnonymously(auth);
         }
       } catch (error) {
@@ -143,9 +277,6 @@ export default function App() {
     };
     initAuth();
 
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
-      setUser(u);
-    });
     return () => unsubscribe();
   }, []);
 
@@ -232,6 +363,11 @@ export default function App() {
         </p>
       </div>
     );
+  }
+
+  // Ecran de Autentificare (dacă nu este logat)
+  if (!user && auth) {
+    return <AuthScreen />;
   }
 
   return (
@@ -918,7 +1054,7 @@ function ParentDashboard({
 
   const handleLogin = (e) => {
     e.preventDefault();
-    if (pin === "1234") {
+    if (pin === "1304") {
       setIsAuthenticated(true);
     } else {
       alert("PIN incorect!");
@@ -1063,9 +1199,20 @@ function ParentDashboard({
 
   return (
     <div className="bg-white rounded-3xl shadow-xl border-2 border-slate-100 overflow-hidden mt-6 animate-fade-in relative z-10">
-      <div className="bg-slate-800 p-4 sm:px-8 text-white flex items-center gap-3">
-        <Settings size={24} />
-        <h2 className="text-xl font-bold">Panou de Control Părinți</h2>
+      <div className="bg-slate-800 p-4 sm:px-8 text-white flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Settings size={24} />
+          <h2 className="text-xl font-bold">Panou de Control Părinți</h2>
+        </div>
+        <button
+          onClick={() => {
+            signOut(auth);
+          }}
+          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm font-bold transition-colors flex items-center gap-1"
+          title="Deconectare din cont"
+        >
+          Ieșire Cont
+        </button>
       </div>
 
       <div className="flex border-b-2 border-slate-100 flex-wrap">
