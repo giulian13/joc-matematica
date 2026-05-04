@@ -9,50 +9,15 @@ import {
   Check,
   X,
   AlertCircle,
-  Sparkles,
   Loader2,
   Lock,
   Settings,
   Plus,
   Trash2,
   CheckCircle2,
+  BookOpen,
+  FileText,
 } from "lucide-react";
-
-// ==========================================
-// 🪄 ZONA API GEMINI
-// ==========================================
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-
-async function callGeminiAPI(prompt) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-  const payload = {
-    contents: [{ parts: [{ text: prompt }] }],
-  };
-
-  let retries = 5;
-  let delay = 1000;
-  while (retries > 0) {
-    try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!response.ok) throw new Error("API Error");
-      const data = await response.json();
-      return (
-        data.candidates?.[0]?.content?.parts?.[0]?.text ||
-        "M-am încurcat în magie, scuze!"
-      );
-    } catch (error) {
-      retries--;
-      if (retries === 0)
-        return "Eroare de conexiune la magie. Mai încearcă târziu!";
-      await new Promise((res) => setTimeout(res, delay));
-      delay *= 2;
-    }
-  }
-}
 
 // ==========================================
 // 🛠️ ZONA DE CONFIGURARE MAGAZIN
@@ -96,11 +61,12 @@ const INITIAL_SHOP_ITEMS = [
 ];
 
 export default function App() {
-  const [view, setView] = useState("menu"); // 'menu', 'game', 'shop', 'parent'
+  const [view, setView] = useState("menu"); // 'menu', 'game', 'shop', 'parent', 'homework'
   const [points, setPoints] = useState(0);
   const [history, setHistory] = useState([]);
   const [inventory, setInventory] = useState([]);
   const [shopItems, setShopItems] = useState(INITIAL_SHOP_ITEMS);
+  const [homework, setHomework] = useState([]); // Aici stocăm temele adăugate de tine
 
   // Adaugă o înregistrare în istoric
   const addHistory = (message, amount, type = "earn") => {
@@ -188,6 +154,9 @@ export default function App() {
         {view === "game" && (
           <GameScreen setPoints={setPoints} addHistory={addHistory} />
         )}
+        {view === "homework" && (
+          <HomeworkScreen homework={homework} setHomework={setHomework} />
+        )}
         {view === "shop" && (
           <ShopScreen
             points={points}
@@ -209,6 +178,8 @@ export default function App() {
             setShopItems={setShopItems}
             history={history}
             addHistory={addHistory}
+            homework={homework}
+            setHomework={setHomework}
           />
         )}
       </main>
@@ -231,7 +202,7 @@ function MainMenu({ setView }) {
         grozave din magazinul virtual!
       </p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-2xl mt-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full max-w-4xl mt-8">
         <button
           onClick={() => setView("game")}
           className="flex flex-col items-center p-8 bg-gradient-to-b from-blue-400 to-blue-500 border-4 border-blue-600 rounded-[2.5rem] transition-all shadow-[0_10px_0_0_#1e3a8a] hover:shadow-[0_15px_0_0_#1e3a8a] hover:-translate-y-2 active:translate-y-2 active:shadow-none group"
@@ -239,8 +210,20 @@ function MainMenu({ setView }) {
           <div className="bg-white p-6 rounded-full mb-4 group-hover:scale-110 group-hover:rotate-12 transition-transform shadow-inner text-blue-500">
             <Play size={48} className="ml-2 fill-blue-500" />
           </div>
-          <span className="text-3xl font-black text-white drop-shadow-md">
-            Joacă Acum
+          <span className="text-2xl font-black text-white drop-shadow-md">
+            Joacă
+          </span>
+        </button>
+
+        <button
+          onClick={() => setView("homework")}
+          className="flex flex-col items-center p-8 bg-gradient-to-b from-orange-400 to-orange-500 border-4 border-orange-600 rounded-[2.5rem] transition-all shadow-[0_10px_0_0_#c2410c] hover:shadow-[0_15px_0_0_#c2410c] hover:-translate-y-2 active:translate-y-2 active:shadow-none group"
+        >
+          <div className="bg-white p-6 rounded-full mb-4 group-hover:scale-110 transition-transform shadow-inner text-orange-500">
+            <BookOpen size={48} className="fill-orange-500 text-orange-500" />
+          </div>
+          <span className="text-2xl font-black text-white drop-shadow-md text-center">
+            Teme
           </span>
         </button>
 
@@ -251,10 +234,145 @@ function MainMenu({ setView }) {
           <div className="bg-white p-6 rounded-full mb-4 group-hover:scale-110 group-hover:-rotate-12 transition-transform shadow-inner text-purple-500">
             <ShoppingCart size={48} className="fill-purple-500" />
           </div>
-          <span className="text-3xl font-black text-white drop-shadow-md">
+          <span className="text-2xl font-black text-white drop-shadow-md">
             Magazin
           </span>
         </button>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// ECRANUL DE TEME (PENTRU COPIL)
+// ==========================================
+function HomeworkScreen({ homework, setHomework }) {
+  const [answers, setAnswers] = useState({});
+
+  const handleAnswerChange = (id, text) => {
+    setAnswers((prev) => ({ ...prev, [id]: text }));
+  };
+
+  const handleSubmit = (hwItem) => {
+    const studentAnswer =
+      answers[hwItem.id] !== undefined
+        ? answers[hwItem.id]
+        : hwItem.childAnswer;
+    if (!studentAnswer || studentAnswer.trim() === "") return;
+
+    setHomework((prev) =>
+      prev.map((item) =>
+        item.id === hwItem.id
+          ? { ...item, status: "answered", childAnswer: studentAnswer }
+          : item,
+      ),
+    );
+  };
+
+  const activeHomework = homework.filter(
+    (h) =>
+      h.status === "new" || h.status === "answered" || h.status === "returned",
+  );
+
+  return (
+    <div className="max-w-2xl mx-auto mt-10 animate-fade-in relative z-10">
+      <div className="bg-white/90 backdrop-blur-sm rounded-[3rem] shadow-2xl overflow-hidden border-4 border-white">
+        <div className="bg-gradient-to-r from-orange-400 via-orange-500 to-red-500 p-8 text-center relative overflow-hidden">
+          <div className="absolute inset-0 bg-math-pattern opacity-50"></div>
+          <div className="relative z-10">
+            <h2 className="text-white text-xl font-black opacity-90 uppercase tracking-widest mb-4 drop-shadow-sm">
+              Teme Speciale
+            </h2>
+            <div className="text-white font-black drop-shadow-lg text-4xl mb-2">
+              Exerciții de la Părinți
+            </div>
+          </div>
+        </div>
+
+        <div className="p-8">
+          {activeHomework.length === 0 ? (
+            <div className="text-center py-10">
+              <div className="text-6xl mb-4">🎉</div>
+              <h3 className="text-2xl font-bold text-slate-700">
+                Nu ai nicio temă nouă!
+              </h3>
+              <p className="text-slate-500 mt-2">
+                Te poți întoarce la joacă sau în magazin.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {activeHomework.map((hw) => (
+                <div
+                  key={hw.id}
+                  className="bg-orange-50 border-4 border-orange-200 rounded-[2rem] p-6 shadow-sm"
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <h3 className="text-xl font-black text-slate-800">
+                      {hw.question}
+                    </h3>
+                    <span className="flex items-center gap-1 font-bold text-orange-700 bg-orange-200 px-3 py-1 rounded-full text-sm">
+                      <Star
+                        size={16}
+                        className="fill-orange-600 text-orange-600"
+                      />{" "}
+                      max {hw.reward}
+                    </span>
+                  </div>
+
+                  {hw.status === "new" || hw.status === "returned" ? (
+                    <div className="flex flex-col gap-4">
+                      {hw.status === "returned" && (
+                        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-xl">
+                          <p className="text-sm font-bold text-red-700 mb-1">
+                            Mesaj de la părinte (Trebuie refăcut):
+                          </p>
+                          <p className="text-red-900 font-medium">
+                            {hw.parentComment}
+                          </p>
+                        </div>
+                      )}
+                      <textarea
+                        value={
+                          answers[hw.id] !== undefined
+                            ? answers[hw.id]
+                            : hw.childAnswer || ""
+                        }
+                        onChange={(e) =>
+                          handleAnswerChange(hw.id, e.target.value)
+                        }
+                        placeholder="Scrie răspunsul sau explicația aici..."
+                        className="w-full p-4 border-2 border-orange-300 rounded-2xl focus:outline-none focus:border-orange-500 font-bold text-slate-700 resize-none"
+                        rows="2"
+                      />
+                      <button
+                        onClick={() => handleSubmit(hw)}
+                        className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-xl transition-all shadow-md active:translate-y-1"
+                      >
+                        {hw.status === "returned"
+                          ? "Trimite din nou"
+                          : "Trimite Răspunsul"}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="bg-white/60 p-4 rounded-xl border-2 border-orange-100">
+                      <p className="text-sm text-slate-500 font-bold mb-1">
+                        Răspunsul tău:
+                      </p>
+                      <p className="text-lg font-black text-slate-800">
+                        {hw.childAnswer}
+                      </p>
+                      <div className="mt-3 flex items-center gap-2 text-orange-600 font-bold">
+                        <Loader2 className="animate-spin" size={18} />
+                        Așteaptă corectarea...
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -267,8 +385,6 @@ function GameScreen({ setPoints, addHistory }) {
   const [problem, setProblem] = useState(null);
   const [answer, setAnswer] = useState("");
   const [feedback, setFeedback] = useState(null); // { type: 'success' | 'error', message: string }
-  const [hint, setHint] = useState(null);
-  const [isMagicLoading, setIsMagicLoading] = useState(false);
   const inputRef = useRef(null);
 
   // Funcție pentru generarea unei probleme noi
@@ -356,10 +472,9 @@ function GameScreen({ setPoints, addHistory }) {
         break;
     }
 
-    setProblem({ text, answer: correctAnswer, reward, isStory: false });
+    setProblem({ text, answer: correctAnswer, reward });
     setAnswer("");
     setFeedback(null);
-    setHint(null);
     if (inputRef.current) inputRef.current.focus();
   };
 
@@ -381,7 +496,7 @@ function GameScreen({ setPoints, addHistory }) {
       });
       setPoints((prev) => prev + problem.reward);
       addHistory(
-        `Răspuns corect: ${problem.isStory ? "Poveste" : problem.text} = ${problem.answer}`,
+        `Răspuns corect: ${problem.text} = ${problem.answer}`,
         problem.reward,
         "earn",
       );
@@ -392,30 +507,10 @@ function GameScreen({ setPoints, addHistory }) {
       }, 2500); // Timp mărit pentru a putea citi mesajul
     } else {
       setFeedback({ type: "error", message: `Greșit. Încearcă din nou!` });
-      addHistory(
-        `Răspuns greșit la: ${problem.isStory ? "Poveste" : problem.text}`,
-        0,
-        "fail",
-      );
+      addHistory(`Răspuns greșit la: ${problem.text}`, 0, "fail");
       setAnswer("");
       if (inputRef.current) inputRef.current.focus();
     }
-  };
-
-  const handleMakeStory = async () => {
-    setIsMagicLoading(true);
-    const prompt = `Ești un profesor de clasa a 2-a amuzant și prietenos. Transformă următorul exercițiu matematic într-o scurtă problemă de poveste pentru un copil de 8 ani: "${problem.text}". Folosește un limbaj extrem de simplu și captivant, maxim 2 scurte propoziții. Nu scrie rezultatul în text! Răspunde doar cu povestea. Fii creativ (ex: cu dinozauri, pirați, nave spațiale, animale).`;
-    const response = await callGeminiAPI(prompt);
-    setProblem((prev) => ({ ...prev, text: response, isStory: true }));
-    setIsMagicLoading(false);
-  };
-
-  const handleGetHint = async () => {
-    setIsMagicLoading(true);
-    const prompt = `Ești un profesor răbdător de clasa a 2-a. Un copil trebuie să rezolve exercițiul: "${problem.isStory ? problem.text : problem.text}". Rezultatul final este ${problem.answer}. Oferă-i un scurt indiciu logic sau o metodă de gândire (o analogie simplă vizuală) pentru a rezolva problema. NU îi spune direct rezultatul final! Fii foarte scurt, maxim o propoziție prietenoasă. Începe cu "Gândește-te așa: "`;
-    const response = await callGeminiAPI(prompt);
-    setHint(response);
-    setIsMagicLoading(false);
   };
 
   if (!problem)
@@ -437,10 +532,8 @@ function GameScreen({ setPoints, addHistory }) {
             <h2 className="text-white text-xl font-black opacity-90 uppercase tracking-widest mb-4 drop-shadow-sm">
               Rezolvă exercițiul
             </h2>
-            <div
-              className={`text-white font-black drop-shadow-lg tracking-wider transition-all duration-500 ${problem.isStory ? "text-2xl leading-relaxed px-4" : "text-7xl animate-float"}`}
-            >
-              {problem.text} {problem.isStory ? "" : "= ?"}
+            <div className="text-white font-black drop-shadow-lg tracking-wider transition-all duration-500 text-7xl animate-float">
+              {problem.text} = ?
             </div>
             <div className="mt-6 inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-full text-white text-base font-bold border-2 border-white/30 shadow-inner">
               <Star
@@ -451,55 +544,6 @@ function GameScreen({ setPoints, addHistory }) {
             </div>
           </div>
         </div>
-
-        {/* Zona de butoane Magice Gemini */}
-        <div className="px-8 pt-6 flex flex-col sm:flex-row gap-4 justify-center">
-          {!problem.isStory && (
-            <button
-              type="button"
-              onClick={handleMakeStory}
-              disabled={isMagicLoading || feedback?.type === "success"}
-              className="flex-1 bg-gradient-to-b from-purple-100 to-purple-200 border-2 border-purple-300 hover:from-purple-200 hover:to-purple-300 text-purple-800 font-bold py-3 px-4 rounded-2xl text-sm transition-all flex justify-center items-center gap-2 disabled:opacity-50 shadow-sm active:scale-95 group"
-            >
-              {isMagicLoading ? (
-                <Loader2 className="animate-spin" size={20} />
-              ) : (
-                <Sparkles
-                  size={20}
-                  className="group-hover:animate-wiggle text-purple-500"
-                />
-              )}
-              ✨ Poveste Magică
-            </button>
-          )}
-          {!hint && (
-            <button
-              type="button"
-              onClick={handleGetHint}
-              disabled={isMagicLoading || feedback?.type === "success"}
-              className="flex-1 bg-gradient-to-b from-amber-100 to-amber-200 border-2 border-amber-300 hover:from-amber-200 hover:to-amber-300 text-amber-800 font-bold py-3 px-4 rounded-2xl text-sm transition-all flex justify-center items-center gap-2 disabled:opacity-50 shadow-sm active:scale-95 group"
-            >
-              {isMagicLoading ? (
-                <Loader2 className="animate-spin" size={20} />
-              ) : (
-                <Sparkles
-                  size={20}
-                  className="group-hover:animate-wiggle text-amber-500"
-                />
-              )}
-              ✨ Ajutor Magic
-            </button>
-          )}
-        </div>
-
-        {hint && (
-          <div className="mx-8 mt-4 p-5 bg-gradient-to-r from-amber-50 to-orange-50 border-l-8 border-amber-400 rounded-2xl shadow-sm text-amber-900 text-base font-bold italic animate-fade-in relative">
-            <span className="absolute -top-3 -left-3 text-3xl animate-bounce">
-              🧙‍♂️
-            </span>
-            <span className="ml-4">" {hint} "</span>
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="p-8 pt-6">
           <input
@@ -716,10 +760,12 @@ function ParentDashboard({
   setShopItems,
   history,
   addHistory,
+  homework,
+  setHomework,
 }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [pin, setPin] = useState("");
-  const [activeTab, setActiveTab] = useState("shop_manage");
+  const [activeTab, setActiveTab] = useState("homework_manage");
 
   // Stări pentru formularul de adăugare produs nou
   const [newItemName, setNewItemName] = useState("");
@@ -730,9 +776,15 @@ function ParentDashboard({
   // Stări pentru acordare puncte
   const [bonusPoints, setBonusPoints] = useState("");
 
+  // Stări pentru teme
+  const [newHwQuestion, setNewHwQuestion] = useState("");
+  const [newHwReward, setNewHwReward] = useState("");
+  const [gradePoints, setGradePoints] = useState({});
+  const [parentComments, setParentComments] = useState({});
+
   const handleLogin = (e) => {
     e.preventDefault();
-    if (pin === "1304") {
+    if (pin === "1234") {
       // PIN DEFAULT: 1234
       setIsAuthenticated(true);
     } else {
@@ -783,6 +835,62 @@ function ParentDashboard({
     alert(`Acțiune realizată! Punctele au fost actualizate.`);
   };
 
+  const handleAddHomework = (e) => {
+    e.preventDefault();
+    if (!newHwQuestion || !newHwReward) return;
+
+    const newHw = {
+      id: Date.now(),
+      question: newHwQuestion,
+      reward: parseInt(newHwReward, 10),
+      status: "new", // new, answered, graded, returned
+      childAnswer: "",
+    };
+
+    setHomework((prev) => [...prev, newHw]);
+    setNewHwQuestion("");
+    setNewHwReward("");
+  };
+
+  const handleGradeHomework = (id, maxReward) => {
+    const awarded =
+      gradePoints[id] !== undefined ? parseInt(gradePoints[id], 10) : maxReward;
+
+    setHomework((prev) =>
+      prev.map((hw) => (hw.id === id ? { ...hw, status: "graded" } : hw)),
+    );
+    if (awarded > 0) {
+      setPoints((prev) => prev + awarded);
+      addHistory(`Temă corectată`, awarded, "earn");
+    }
+  };
+
+  const handleReturnHomework = (id) => {
+    const comment = parentComments[id];
+    if (!comment || comment.trim() === "") {
+      alert(
+        "Te rog să adaugi un comentariu explicativ pentru ca cel mic să știe ce a greșit.",
+      );
+      return;
+    }
+    setHomework((prev) =>
+      prev.map((hw) =>
+        hw.id === id
+          ? { ...hw, status: "returned", parentComment: comment }
+          : hw,
+      ),
+    );
+    setParentComments((prev) => {
+      const newComments = { ...prev };
+      delete newComments[id];
+      return newComments;
+    });
+  };
+
+  const handleDeleteHomework = (id) => {
+    setHomework((prev) => prev.filter((hw) => hw.id !== id));
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="max-w-sm mx-auto mt-20 bg-white p-8 rounded-3xl shadow-xl border-2 border-slate-100 animate-fade-in relative z-10">
@@ -829,6 +937,12 @@ function ParentDashboard({
 
       <div className="flex border-b-2 border-slate-100 flex-wrap">
         <button
+          onClick={() => setActiveTab("homework_manage")}
+          className={`flex-1 py-4 text-sm sm:text-base font-bold transition-colors ${activeTab === "homework_manage" ? "bg-slate-50 text-slate-800 border-b-4 border-slate-800" : "text-slate-500 hover:bg-slate-50"}`}
+        >
+          Teme Zilnice
+        </button>
+        <button
           onClick={() => setActiveTab("shop_manage")}
           className={`flex-1 py-4 text-sm sm:text-base font-bold transition-colors ${activeTab === "shop_manage" ? "bg-slate-50 text-slate-800 border-b-4 border-slate-800" : "text-slate-500 hover:bg-slate-50"}`}
         >
@@ -849,6 +963,201 @@ function ParentDashboard({
       </div>
 
       <div className="p-6 sm:p-8 min-h-[400px]">
+        {/* --- TAB: TEME ZILNICE --- */}
+        {activeTab === "homework_manage" && (
+          <div className="space-y-8">
+            <div className="bg-orange-50 p-6 rounded-2xl border border-orange-200">
+              <h3 className="font-bold text-lg mb-4 flex items-center gap-2 text-orange-800">
+                <FileText size={20} /> Adaugă o temă / problemă nouă
+              </h3>
+              <form
+                onSubmit={handleAddHomework}
+                className="grid grid-cols-1 sm:grid-cols-4 gap-4"
+              >
+                <div className="sm:col-span-3">
+                  <label className="block text-sm font-bold text-orange-700 mb-1">
+                    Cerința exercițiului
+                  </label>
+                  <input
+                    required
+                    value={newHwQuestion}
+                    onChange={(e) => setNewHwQuestion(e.target.value)}
+                    type="text"
+                    className="w-full p-3 border border-orange-300 rounded-xl"
+                    placeholder="ex: Cât fac 5 mere + 2 mere? Scrie și explicația."
+                  />
+                </div>
+                <div className="sm:col-span-1">
+                  <label className="block text-sm font-bold text-orange-700 mb-1">
+                    Puncte Max
+                  </label>
+                  <input
+                    required
+                    value={newHwReward}
+                    onChange={(e) => setNewHwReward(e.target.value)}
+                    type="number"
+                    className="w-full p-3 border border-orange-300 rounded-xl"
+                    placeholder="ex: 50"
+                  />
+                </div>
+                <div className="sm:col-span-4">
+                  <button
+                    type="submit"
+                    className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-xl transition-colors shadow-sm"
+                  >
+                    Trimite Tema către Copil
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <div>
+              <h3 className="font-bold text-lg mb-4 text-slate-800">
+                Teme de Corectat
+              </h3>
+              <div className="space-y-4">
+                {homework.filter((hw) => hw.status === "answered").length ===
+                  0 && (
+                  <p className="text-slate-500 italic">
+                    Nu ai nicio temă de corectat momentan.
+                  </p>
+                )}
+                {homework
+                  .filter((hw) => hw.status === "answered")
+                  .map((hw) => (
+                    <div
+                      key={hw.id}
+                      className="bg-white border-2 border-blue-200 p-5 rounded-xl shadow-sm"
+                    >
+                      <p className="text-sm text-slate-500 font-bold mb-1">
+                        Cerință:
+                      </p>
+                      <p className="font-black text-slate-800 mb-4">
+                        {hw.question}
+                      </p>
+
+                      <div className="bg-slate-50 p-4 rounded-lg mb-4 border border-slate-200">
+                        <p className="text-sm text-slate-500 font-bold mb-1">
+                          Răspunsul copilului:
+                        </p>
+                        <p className="font-bold text-blue-700">
+                          {hw.childAnswer}
+                        </p>
+                      </div>
+
+                      <div className="flex flex-col gap-4">
+                        <div className="flex items-end gap-3 flex-wrap">
+                          <div className="flex-1 min-w-[200px]">
+                            <label className="block text-xs font-bold text-slate-500 mb-1">
+                              Comentariu pentru refacere (Obligatoriu la
+                              returnare)
+                            </label>
+                            <input
+                              type="text"
+                              value={parentComments[hw.id] || ""}
+                              onChange={(e) =>
+                                setParentComments((prev) => ({
+                                  ...prev,
+                                  [hw.id]: e.target.value,
+                                }))
+                              }
+                              placeholder="ex: Mai verifică o dată calculul..."
+                              className="w-full p-2 border-2 border-slate-200 rounded-lg text-sm"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex items-end gap-3 flex-wrap bg-slate-50 p-3 rounded-lg border border-slate-200">
+                          <div>
+                            <label className="block text-xs font-bold text-slate-500 mb-1">
+                              Acordă Puncte (Max {hw.reward})
+                            </label>
+                            <input
+                              type="number"
+                              value={
+                                gradePoints[hw.id] !== undefined
+                                  ? gradePoints[hw.id]
+                                  : hw.reward
+                              }
+                              onChange={(e) =>
+                                setGradePoints((prev) => ({
+                                  ...prev,
+                                  [hw.id]: e.target.value,
+                                }))
+                              }
+                              className="w-24 p-2 border-2 border-blue-300 rounded-lg text-center font-bold"
+                            />
+                          </div>
+                          <button
+                            onClick={() =>
+                              handleGradeHomework(hw.id, hw.reward)
+                            }
+                            className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-lg transition-colors flex items-center gap-2"
+                          >
+                            <CheckCircle2 size={18} /> Gata, Acordă!
+                          </button>
+
+                          <button
+                            onClick={() => handleReturnHomework(hw.id)}
+                            className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center gap-2 ml-auto"
+                          >
+                            <X size={18} /> Întoarce pentru refacere
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+
+            <div>
+              <h3 className="font-bold text-lg mb-4 text-slate-800">
+                Teme în Așteptare (Ne-rezolvate sau întoarse la copil)
+              </h3>
+              <div className="space-y-2">
+                {homework.filter(
+                  (hw) => hw.status === "new" || hw.status === "returned",
+                ).length === 0 && (
+                  <p className="text-slate-500 italic">
+                    Nicio temă în așteptare.
+                  </p>
+                )}
+                {homework
+                  .filter(
+                    (hw) => hw.status === "new" || hw.status === "returned",
+                  )
+                  .map((hw) => (
+                    <div
+                      key={hw.id}
+                      className="flex justify-between items-center bg-slate-50 border border-slate-200 p-3 rounded-lg"
+                    >
+                      <div className="flex flex-col">
+                        <span className="font-bold text-slate-700">
+                          {hw.question}{" "}
+                          <span className="text-orange-500 text-sm">
+                            (Max {hw.reward}⭐)
+                          </span>
+                        </span>
+                        {hw.status === "returned" && (
+                          <span className="text-xs text-red-500 font-bold mt-1">
+                            Status: Întoarsă pentru refacere
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => handleDeleteHomework(hw.id)}
+                        className="text-red-500 hover:bg-red-100 p-2 rounded-lg transition-colors"
+                        title="Șterge tema"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* --- TAB: GESTIONARE MAGAZIN --- */}
         {activeTab === "shop_manage" && (
           <div className="space-y-8">
