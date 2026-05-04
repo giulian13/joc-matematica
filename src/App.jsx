@@ -20,6 +20,52 @@ import {
 } from "lucide-react";
 
 // ==========================================
+// 🚀 ZONA FIREBASE (BAZA DE DATE)
+// ==========================================
+import { initializeApp } from "firebase/app";
+import {
+  getAuth,
+  signInWithCustomToken,
+  signInAnonymously,
+  onAuthStateChanged,
+} from "firebase/auth";
+import { getFirestore, doc, setDoc, onSnapshot } from "firebase/firestore";
+
+const getFirebaseConfig = () => {
+  // 1. Mediul Canvas (pentru testare aici)
+  if (typeof __firebase_config !== "undefined") {
+    return JSON.parse(__firebase_config);
+  }
+
+  // 2. Mediul tău de pe Netlify / VSCode
+
+  return {
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  };
+};
+
+let app, auth, db;
+try {
+  const config = getFirebaseConfig();
+  if (config && config.apiKey) {
+    // Inițializează doar dacă am primit o cheie
+    app = initializeApp(config);
+    auth = getAuth(app);
+    db = getFirestore(app);
+  }
+} catch (e) {
+  console.error("Eroare la inițializarea Firebase:", e);
+}
+
+const APP_ID =
+  typeof __app_id !== "undefined" ? __app_id : "joc-matematica-123";
+
+// ==========================================
 // 🛠️ ZONA DE CONFIGURARE MAGAZIN
 // ==========================================
 const INITIAL_SHOP_ITEMS = [
@@ -61,14 +107,109 @@ const INITIAL_SHOP_ITEMS = [
 ];
 
 export default function App() {
-  const [view, setView] = useState("menu"); // 'menu', 'game', 'shop', 'parent', 'homework'
+  const [view, setView] = useState("menu");
   const [points, setPoints] = useState(0);
   const [history, setHistory] = useState([]);
   const [inventory, setInventory] = useState([]);
   const [shopItems, setShopItems] = useState(INITIAL_SHOP_ITEMS);
-  const [homework, setHomework] = useState([]); // Aici stocăm temele adăugate de tine
+  const [homework, setHomework] = useState([]);
 
-  // Adaugă o înregistrare în istoric
+  // Stări pentru Firebase
+  const [user, setUser] = useState(null);
+  const [dbLoading, setDbLoading] = useState(true);
+  const isDataLoaded = useRef(false);
+
+  // 1. Conectare/Autentificare automată la baza de date
+  useEffect(() => {
+    if (!auth) {
+      setDbLoading(false); // Dacă nu avem firebase config, continuă jocul offline
+      return;
+    }
+
+    const initAuth = async () => {
+      try {
+        if (
+          typeof __initial_auth_token !== "undefined" &&
+          __initial_auth_token
+        ) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+      } catch (error) {
+        console.error("Eroare la conectare baza de date:", error);
+        setDbLoading(false);
+      }
+    };
+    initAuth();
+
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // 2. Descărcarea Salvării (Când aplicația se deschide)
+  useEffect(() => {
+    if (!user || !db) return;
+
+    const docRef = doc(
+      db,
+      "artifacts",
+      APP_ID,
+      "users",
+      user.uid,
+      "gameData",
+      "state",
+    );
+    const unsubscribe = onSnapshot(
+      docRef,
+      (docSnap) => {
+        if (!isDataLoaded.current) {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            setPoints(data.points ?? 0);
+            setHistory(data.history ?? []);
+            setInventory(data.inventory ?? []);
+            setShopItems(data.shopItems ?? INITIAL_SHOP_ITEMS);
+            setHomework(data.homework ?? []);
+          }
+          isDataLoaded.current = true;
+        }
+        setDbLoading(false);
+      },
+      (error) => {
+        console.error("Eroare la citirea datelor:", error);
+        setDbLoading(false);
+      },
+    );
+    return () => unsubscribe();
+  }, [user]);
+
+  // 3. Salvare Automată (Când orice se schimbă în joc, salvează pe internet în fundal)
+  useEffect(() => {
+    if (!isDataLoaded.current || !user || !db) return;
+
+    const timer = setTimeout(() => {
+      const docRef = doc(
+        db,
+        "artifacts",
+        APP_ID,
+        "users",
+        user.uid,
+        "gameData",
+        "state",
+      );
+      setDoc(
+        docRef,
+        { points, history, inventory, shopItems, homework },
+        { merge: true },
+      );
+    }, 1000); // Salvează la 1 secundă după ce s-a terminat acțiunea (pentru a nu bloca internetul)
+
+    return () => clearTimeout(timer);
+  }, [points, history, inventory, shopItems, homework, user]);
+
   const addHistory = (message, amount, type = "earn") => {
     const timestamp = new Date().toLocaleTimeString("ro-RO", {
       hour: "2-digit",
@@ -80,6 +221,18 @@ export default function App() {
       ...prev,
     ]);
   };
+
+  // Ecran de încărcare inițial
+  if (dbLoading) {
+    return (
+      <div className="min-h-screen bg-sky-100 flex flex-col items-center justify-center">
+        <Loader2 className="animate-spin text-blue-500 mb-4" size={64} />
+        <p className="text-xl font-bold text-slate-600">
+          Se încarcă progresul...
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-300 via-sky-100 to-indigo-100 font-sans text-slate-800 selection:bg-yellow-300 relative overflow-x-hidden">
@@ -384,57 +537,53 @@ function HomeworkScreen({ homework, setHomework }) {
 function GameScreen({ setPoints, addHistory }) {
   const [problem, setProblem] = useState(null);
   const [answer, setAnswer] = useState("");
-  const [feedback, setFeedback] = useState(null); // { type: 'success' | 'error', message: string }
+  const [feedback, setFeedback] = useState(null);
   const inputRef = useRef(null);
 
-  // Funcție pentru generarea unei probleme noi
   const generateProblem = () => {
-    // 0: Adunare, 1: Scădere, 2: Înmulțire, 3: Împărțire, 4: Ordinea operațiilor (ușor), 5: Paranteze rotunde
     const type = Math.floor(Math.random() * 6);
     let text = "";
     let correctAnswer = 0;
     let reward = 10;
 
     switch (type) {
-      case 0: // Adunare (până la 100)
+      case 0:
         const a1 = Math.floor(Math.random() * 50) + 10;
         const b1 = Math.floor(Math.random() * 40) + 5;
         text = `${a1} + ${b1}`;
         correctAnswer = a1 + b1;
         reward = 5;
         break;
-      case 1: // Scădere (rezultat pozitiv)
+      case 1:
         const a2 = Math.floor(Math.random() * 50) + 20;
         const b2 = Math.floor(Math.random() * a2);
         text = `${a2} - ${b2}`;
         correctAnswer = a2 - b2;
         reward = 5;
         break;
-      case 2: // Înmulțire (tabla înmulțirii 0-10)
+      case 2:
         const a3 = Math.floor(Math.random() * 11);
         const b3 = Math.floor(Math.random() * 11);
         text = `${a3} x ${b3}`;
         correctAnswer = a3 * b3;
         reward = 10;
         break;
-      case 3: // Împărțire (fără rest)
-        const divisor = Math.floor(Math.random() * 10) + 1; // 1-10
-        const quotient = Math.floor(Math.random() * 11); // 0-10
+      case 3:
+        const divisor = Math.floor(Math.random() * 10) + 1;
+        const quotient = Math.floor(Math.random() * 11);
         const dividend = divisor * quotient;
         text = `${dividend} : ${divisor}`;
         correctAnswer = quotient;
         reward = 10;
         break;
-      case 4: // Ordinea operațiilor (ex: 5 + 2 x 3)
+      case 4:
         const a4 = Math.floor(Math.random() * 10) + 1;
         const b4 = Math.floor(Math.random() * 6);
         const c4 = Math.floor(Math.random() * 6);
-        // Ex: a + b * c
         if (Math.random() > 0.5) {
           text = `${a4} + ${b4} x ${c4}`;
           correctAnswer = a4 + b4 * c4;
         } else {
-          // Ex: a * b - c (asigurăm pozitiv)
           const multResult = a4 * b4;
           const subtr = Math.floor(Math.random() * multResult);
           text = `${a4} x ${b4} - ${subtr}`;
@@ -442,27 +591,24 @@ function GameScreen({ setPoints, addHistory }) {
         }
         reward = 15;
         break;
-      case 5: // Paranteze rotunde
+      case 5:
         const subType = Math.floor(Math.random() * 3);
         if (subType === 0) {
-          // Tip: (a + b) x c
-          const a5 = Math.floor(Math.random() * 5) + 1; // 1-5
-          const b5 = Math.floor(Math.random() * 5) + 1; // 1-5
-          const c5 = Math.floor(Math.random() * 4) + 2; // 2-5
+          const a5 = Math.floor(Math.random() * 5) + 1;
+          const b5 = Math.floor(Math.random() * 5) + 1;
+          const c5 = Math.floor(Math.random() * 4) + 2;
           text = `(${a5} + ${b5}) x ${c5}`;
           correctAnswer = (a5 + b5) * c5;
         } else if (subType === 1) {
-          // Tip: c x (a - b)
-          const a5 = Math.floor(Math.random() * 10) + 5; // 5-14
-          const b5 = Math.floor(Math.random() * (a5 - 1)) + 1; // ne asigurăm că a5 > b5
-          const c5 = Math.floor(Math.random() * 5) + 2; // 2-6
+          const a5 = Math.floor(Math.random() * 10) + 5;
+          const b5 = Math.floor(Math.random() * (a5 - 1)) + 1;
+          const c5 = Math.floor(Math.random() * 5) + 2;
           text = `${c5} x (${a5} - ${b5})`;
           correctAnswer = c5 * (a5 - b5);
         } else {
-          // Tip: a - (b + c)
           const b5 = Math.floor(Math.random() * 10) + 1;
           const c5 = Math.floor(Math.random() * 10) + 1;
-          const a5 = Math.floor(Math.random() * 20) + (b5 + c5); // a5 e mereu mai mare decât suma lor
+          const a5 = Math.floor(Math.random() * 20) + (b5 + c5);
           text = `${a5} - (${b5} + ${c5})`;
           correctAnswer = a5 - (b5 + c5);
         }
@@ -478,7 +624,6 @@ function GameScreen({ setPoints, addHistory }) {
     if (inputRef.current) inputRef.current.focus();
   };
 
-  // Inițializează prima problemă la montare
   useEffect(() => {
     generateProblem();
   }, []);
@@ -501,10 +646,9 @@ function GameScreen({ setPoints, addHistory }) {
         "earn",
       );
 
-      // Așteaptă puțin, apoi treci la următoarea problemă
       setTimeout(() => {
         generateProblem();
-      }, 2500); // Timp mărit pentru a putea citi mesajul
+      }, 2500);
     } else {
       setFeedback({ type: "error", message: `Greșit. Încearcă din nou!` });
       addHistory(`Răspuns greșit la: ${problem.text}`, 0, "fail");
@@ -524,10 +668,7 @@ function GameScreen({ setPoints, addHistory }) {
     <div className="max-w-xl mx-auto mt-10 animate-fade-in relative z-10">
       <div className="bg-white/90 backdrop-blur-sm rounded-[3rem] shadow-2xl overflow-hidden border-4 border-white transform transition-transform hover:scale-[1.01] duration-300">
         <div className="bg-gradient-to-r from-blue-400 via-blue-500 to-indigo-500 p-8 text-center relative overflow-hidden">
-          {/* Strat separat pentru fundalul cu buline pentru a nu șterge gradientul */}
           <div className="absolute inset-0 bg-math-pattern opacity-50"></div>
-
-          {/* Textul a fost mutat într-un strat deasupra (z-10) */}
           <div className="relative z-10">
             <h2 className="text-white text-xl font-black opacity-90 uppercase tracking-widest mb-4 drop-shadow-sm">
               Rezolvă exercițiul
@@ -594,7 +735,7 @@ function ShopScreen({
   addHistory,
   shopItems,
 }) {
-  const [activeTab, setActiveTab] = useState("shop"); // 'shop', 'history', 'inventory'
+  const [activeTab, setActiveTab] = useState("shop");
 
   const handleBuy = (item) => {
     if (points >= item.cost) {
@@ -610,7 +751,6 @@ function ShopScreen({
 
   return (
     <div className="bg-white/90 backdrop-blur-sm rounded-[3rem] shadow-2xl border-4 border-white overflow-hidden mt-6 relative z-10">
-      {/* Tabs / Meniu Magazin */}
       <div className="flex border-b-4 border-slate-100 bg-slate-50/50">
         <button
           onClick={() => setActiveTab("shop")}
@@ -636,7 +776,6 @@ function ShopScreen({
       </div>
 
       <div className="p-6 sm:p-8 min-h-[400px]">
-        {/* VIEW: MAGAZIN */}
         {activeTab === "shop" && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {shopItems.map((item) => (
@@ -676,7 +815,6 @@ function ShopScreen({
           </div>
         )}
 
-        {/* VIEW: LUCRURILE MELE (INVENTORY) */}
         {activeTab === "inventory" && (
           <div>
             {inventory.length === 0 ? (
@@ -707,7 +845,6 @@ function ShopScreen({
           </div>
         )}
 
-        {/* VIEW: ISTORIC PUNCTE */}
         {activeTab === "history" && (
           <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
             {history.length === 0 ? (
@@ -767,16 +904,13 @@ function ParentDashboard({
   const [pin, setPin] = useState("");
   const [activeTab, setActiveTab] = useState("homework_manage");
 
-  // Stări pentru formularul de adăugare produs nou
   const [newItemName, setNewItemName] = useState("");
   const [newItemCost, setNewItemCost] = useState("");
   const [newItemIcon, setNewItemIcon] = useState("🎁");
   const [newItemDesc, setNewItemDesc] = useState("");
 
-  // Stări pentru acordare puncte
   const [bonusPoints, setBonusPoints] = useState("");
 
-  // Stări pentru teme
   const [newHwQuestion, setNewHwQuestion] = useState("");
   const [newHwReward, setNewHwReward] = useState("");
   const [gradePoints, setGradePoints] = useState({});
@@ -784,8 +918,7 @@ function ParentDashboard({
 
   const handleLogin = (e) => {
     e.preventDefault();
-    if (pin === "1304") {
-      // PIN DEFAULT: 1234
+    if (pin === "1234") {
       setIsAuthenticated(true);
     } else {
       alert("PIN incorect!");
@@ -843,7 +976,7 @@ function ParentDashboard({
       id: Date.now(),
       question: newHwQuestion,
       reward: parseInt(newHwReward, 10),
-      status: "new", // new, answered, graded, returned
+      status: "new",
       childAnswer: "",
     };
 
@@ -963,7 +1096,6 @@ function ParentDashboard({
       </div>
 
       <div className="p-6 sm:p-8 min-h-[400px]">
-        {/* --- TAB: TEME ZILNICE --- */}
         {activeTab === "homework_manage" && (
           <div className="space-y-8">
             <div className="bg-orange-50 p-6 rounded-2xl border border-orange-200">
@@ -1158,7 +1290,6 @@ function ParentDashboard({
           </div>
         )}
 
-        {/* --- TAB: GESTIONARE MAGAZIN --- */}
         {activeTab === "shop_manage" && (
           <div className="space-y-8">
             <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
@@ -1270,7 +1401,6 @@ function ParentDashboard({
           </div>
         )}
 
-        {/* --- TAB: INVENTAR COPIL --- */}
         {activeTab === "inventory_manage" && (
           <div>
             <h3 className="font-bold text-lg mb-4">
@@ -1312,7 +1442,6 @@ function ParentDashboard({
           </div>
         )}
 
-        {/* --- TAB: MODIFICĂ PUNCTE --- */}
         {activeTab === "points_manage" && (
           <div className="max-w-md">
             <h3 className="font-bold text-lg mb-2">Acordă sau Scade Puncte</h3>
