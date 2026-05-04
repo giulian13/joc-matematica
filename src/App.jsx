@@ -732,7 +732,7 @@ function ParentDashboard({
 
   const handleLogin = (e) => {
     e.preventDefault();
-    if (pin === "1234") {
+    if (pin === "1304") {
       // PIN DEFAULT: 1234
       setIsAuthenticated(true);
     } else {
