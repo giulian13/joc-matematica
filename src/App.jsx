@@ -760,18 +760,20 @@ function GameScreen({ setPoints, addHistory }) {
 
     switch (type) {
       case 0:
-        const a1 = Math.floor(Math.random() * 50) + 10;
-        const b1 = Math.floor(Math.random() * 40) + 5;
+        // Adunare (numere cu până la 3 cifre)
+        const a1 = Math.floor(Math.random() * 900) + 50; // Numere între 50 și 949
+        const b1 = Math.floor(Math.random() * 900) + 50;
         text = `${a1} + ${b1}`;
         correctAnswer = a1 + b1;
-        reward = 5;
+        reward = 10;
         break;
       case 1:
-        const a2 = Math.floor(Math.random() * 50) + 20;
-        const b2 = Math.floor(Math.random() * a2);
+        // Scădere (rezultat pozitiv, numere cu până la 3 cifre)
+        const a2 = Math.floor(Math.random() * 850) + 100; // Numere între 100 și 949
+        const b2 = Math.floor(Math.random() * (a2 - 20)) + 20; // Asigurăm că scăzătorul e mai mic
         text = `${a2} - ${b2}`;
         correctAnswer = a2 - b2;
-        reward = 5;
+        reward = 10;
         break;
       case 2:
         const a3 = Math.floor(Math.random() * 11);
