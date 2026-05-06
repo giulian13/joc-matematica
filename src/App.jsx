@@ -308,17 +308,16 @@ export default function App() {
   const [dbLoading, setDbLoading] = useState(true);
   const isDataLoaded = useRef(false);
 
-  // 1. Conectare/Autentificare automată la baza de date
   useEffect(() => {
     if (!auth) {
-      setDbLoading(false); // Dacă nu avem firebase config, continuă jocul offline
+      setDbLoading(false);
       return;
     }
 
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
       if (!u) {
-        setDbLoading(false); // Oprim ecranul de loading doar dacă nu e nimeni logat (afișăm meniul de login)
+        setDbLoading(false);
       }
     });
 
@@ -330,7 +329,6 @@ export default function App() {
         ) {
           await signInWithCustomToken(auth, __initial_auth_token);
         } else if (typeof __initial_auth_token !== "undefined") {
-          // Rulează logarea anonimă automată DOAR pe platforma Canvas
           await signInAnonymously(auth);
         }
       } catch (error) {
@@ -343,14 +341,13 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // 2. Descărcarea Salvării (Când aplicația se deschide)
   useEffect(() => {
     if (!user || !db) {
       isDataLoaded.current = false;
       return;
     }
 
-    isDataLoaded.current = false; // Resetăm starea la fiecare conectare nouă
+    isDataLoaded.current = false;
 
     const docRef = doc(
       db,
@@ -373,7 +370,6 @@ export default function App() {
             setShopItems(data.shopItems ?? INITIAL_SHOP_ITEMS);
             setHomework(data.homework ?? []);
           } else {
-            // Cont nou - resetăm datele complet pentru a preveni importarea progresului anterior
             setPoints(0);
             setHistory([]);
             setInventory([]);
@@ -381,7 +377,7 @@ export default function App() {
             setHomework([]);
           }
           isDataLoaded.current = true;
-          setDbLoading(false); // ASCUNDEM ECRANUL DE LOADING DOAR DUPĂ CE AM PUS DATELE
+          setDbLoading(false);
         }
       },
       (error) => {
@@ -393,7 +389,6 @@ export default function App() {
     return () => unsubscribe();
   }, [user]);
 
-  // 3. Salvare Automată (Când orice se schimbă în joc, salvează pe internet în fundal)
   useEffect(() => {
     if (!isDataLoaded.current || !user || !db) return;
 
@@ -429,69 +424,70 @@ export default function App() {
     ]);
   };
 
-  // Ecran de încărcare inițial
   if (dbLoading) {
     return (
-      <div className="min-h-screen bg-sky-100 flex flex-col items-center justify-center">
-        <Loader2 className="animate-spin text-blue-500 mb-4" size={64} />
-        <p className="text-xl font-bold text-slate-600">
-          Se încarcă progresul...
-        </p>
+      <div className="min-h-screen bg-indigo-900 flex flex-col items-center justify-center">
+        <Loader2 className="animate-spin text-amber-400 mb-4" size={64} />
+        <p className="text-xl font-bold text-amber-100">Se încarcă magia...</p>
       </div>
     );
   }
 
-  // Ecran de Autentificare (dacă nu este logat)
   if (!user && auth) {
     return <AuthScreen />;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-300 via-sky-100 to-indigo-100 font-sans text-slate-800 selection:bg-yellow-300 relative overflow-x-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-indigo-900 via-purple-800 to-orange-900 font-sans text-slate-800 selection:bg-amber-300 relative overflow-x-hidden">
       <style>{`
-        @keyframes float { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-20px) rotate(5deg); } }
-        @keyframes float-delay { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-15px) rotate(-5deg); } }
+        @keyframes float { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-20px) rotate(10deg); } }
+        @keyframes float-delay { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-25px) rotate(-15deg); } }
+        @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 20px rgba(251, 191, 36, 0.4); } 50% { box-shadow: 0 0 40px rgba(251, 191, 36, 0.8); } }
         @keyframes wiggle { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
         @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
-        .animate-float { animation: float 4s ease-in-out infinite; }
-        .animate-float-delay { animation: float-delay 5s ease-in-out infinite; animation-delay: 1s; }
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        .animate-float-delay { animation: float-delay 7s ease-in-out infinite; animation-delay: 2s; }
+        .animate-pulse-glow { animation: pulse-glow 3s infinite; }
         .animate-wiggle { animation: wiggle 2s ease-in-out infinite; }
         .animate-pop { animation: pop 0.3s ease-in-out; }
-        .bg-math-pattern { background-image: radial-gradient(circle at 10px 10px, rgba(255,255,255,0.2) 2px, transparent 0); background-size: 40px 40px; }
+        .bg-magic-pattern { background-image: radial-gradient(circle at 15px 15px, rgba(255,255,255,0.1) 2px, transparent 0); background-size: 30px 30px; }
       `}</style>
 
-      {/* Fundal animat cu simboluri matematice */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 opacity-30">
-        <div className="absolute top-10 left-10 text-6xl text-blue-600 font-black animate-float">
-          +
+      {/* Fundal animat de poveste cu elemente de pisici */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 opacity-20">
+        <div className="absolute top-10 left-10 text-6xl drop-shadow-lg animate-float">
+          🐾
         </div>
-        <div className="absolute top-40 right-20 text-7xl text-purple-600 font-black animate-float-delay">
-          -
+        <div className="absolute top-40 right-20 text-7xl drop-shadow-lg animate-float-delay">
+          🐟
         </div>
-        <div className="absolute bottom-20 left-[20%] text-8xl text-yellow-500 font-black animate-float">
-          x
+        <div className="absolute bottom-32 left-[15%] text-8xl drop-shadow-lg animate-float">
+          🧶
         </div>
-        <div className="absolute top-1/3 left-1/3 text-5xl text-green-500 font-black animate-float-delay">
-          ÷
+        <div className="absolute top-1/3 left-1/4 text-5xl text-yellow-300 drop-shadow-[0_0_15px_rgba(253,224,71,0.8)] animate-float-delay">
+          ✨
         </div>
-        <div className="absolute bottom-40 right-[25%] text-6xl text-pink-500 font-black animate-float">
-          =
+        <div className="absolute bottom-40 right-[20%] text-6xl drop-shadow-lg animate-float">
+          🐱
+        </div>
+        <div className="absolute top-[60%] right-[10%] text-7xl drop-shadow-lg animate-float-delay">
+          🐾
         </div>
       </div>
 
-      <header className="bg-white/80 backdrop-blur-md shadow-sm p-4 sticky top-0 z-20 border-b-2 border-white">
+      <header className="bg-indigo-950/80 backdrop-blur-md shadow-[0_4px_30px_rgba(0,0,0,0.5)] p-4 sticky top-0 z-20 border-b-4 border-amber-500/50">
         <div className="max-w-4xl mx-auto flex justify-between items-center">
           <div
-            className="flex items-center gap-2 cursor-pointer"
+            className="flex items-center gap-3 cursor-pointer group"
             onClick={() => setView("menu")}
           >
-            <div className="bg-blue-500 p-2 rounded-xl">
-              <Award className="text-white" size={28} />
+            <div className="bg-gradient-to-br from-amber-400 to-orange-500 p-2.5 rounded-2xl shadow-lg group-hover:scale-110 transition-transform">
+              <span className="text-2xl drop-shadow-md">🐱</span>
             </div>
-            <h1 className="text-2xl font-black text-blue-600 tracking-tight hidden sm:block">
-              Aventura Matematică
+            <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-orange-400 tracking-tight hidden sm:block drop-shadow-sm">
+              Aventura Pisicilor
             </h1>
-            <h1 className="text-2xl font-black text-blue-600 tracking-tight sm:hidden">
+            <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-orange-400 tracking-tight sm:hidden drop-shadow-sm">
               Aventura
             </h1>
           </div>
@@ -499,14 +495,17 @@ export default function App() {
           <div className="flex items-center gap-4">
             <button
               onClick={() => setView("parent")}
-              className="p-2 bg-slate-200 hover:bg-slate-300 rounded-full transition-colors flex items-center justify-center"
+              className="p-2.5 bg-indigo-800/80 hover:bg-indigo-700 rounded-full transition-colors flex items-center justify-center border-2 border-indigo-500 shadow-inner"
               title="Zona Părinților"
             >
-              <Lock size={20} className="text-slate-600" />
+              <Lock size={20} className="text-indigo-200" />
             </button>
-            <div className="flex items-center gap-2 bg-yellow-100 border-2 border-yellow-400 px-4 py-2 rounded-full shadow-sm">
-              <Star className="text-yellow-500 fill-yellow-500" size={24} />
-              <span className="text-xl font-bold text-yellow-700">
+            <div className="flex items-center gap-2 bg-gradient-to-r from-amber-900/60 to-orange-900/60 border-2 border-amber-500/50 px-4 py-2 rounded-full shadow-[0_0_15px_rgba(245,158,11,0.3)] backdrop-blur-sm">
+              <Star
+                className="text-amber-400 fill-amber-400 animate-pulse"
+                size={24}
+              />
+              <span className="text-xl font-black text-amber-100">
                 {points}
               </span>
             </div>
@@ -557,50 +556,67 @@ export default function App() {
 // ==========================================
 function MainMenu({ setView }) {
   return (
-    <div className="flex flex-col items-center justify-center space-y-8 animate-fade-in mt-10 relative z-10">
-      <div className="text-8xl animate-bounce mb-2 drop-shadow-xl">😺</div>
-      <h2 className="text-5xl text-center font-extrabold text-blue-800 mb-4 drop-shadow-sm animate-wiggle">
-        Bine ai venit la joacă!
-      </h2>
-      <p className="text-xl text-blue-900 font-medium text-center max-w-lg bg-white/60 p-4 rounded-3xl backdrop-blur-sm border-2 border-white shadow-sm">
-        Rezolvă probleme de matematică, câștigă steluțe și cumpără premii
-        grozave din magazinul virtual!
-      </p>
+    <div className="flex flex-col items-center justify-center space-y-8 animate-fade-in mt-6 relative z-10">
+      <div className="relative">
+        <div className="absolute inset-0 bg-amber-400 blur-3xl opacity-30 rounded-full animate-pulse-glow"></div>
+        <div className="text-9xl animate-float drop-shadow-[0_10px_15px_rgba(0,0,0,0.5)] relative z-10">
+          😼
+        </div>
+      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full max-w-4xl mt-8">
+      <div className="text-center space-y-4 max-w-2xl">
+        <h2 className="text-5xl sm:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-b from-amber-100 to-amber-400 drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)] animate-wiggle pb-2">
+          Pădurea Magică!
+        </h2>
+        <p className="text-xl text-indigo-100 font-bold text-center bg-indigo-950/60 p-6 rounded-[2rem] backdrop-blur-md border-2 border-indigo-500/50 shadow-2xl leading-relaxed">
+          Rezolvă misterele matematice pentru a ajuta pisicuțele să adune
+          steluțe și să descopere comorile din magazin! 🧶✨
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full max-w-4xl mt-12">
         <button
           onClick={() => setView("game")}
-          className="flex flex-col items-center p-8 bg-gradient-to-b from-blue-400 to-blue-500 border-4 border-blue-600 rounded-[2.5rem] transition-all shadow-[0_10px_0_0_#1e3a8a] hover:shadow-[0_15px_0_0_#1e3a8a] hover:-translate-y-2 active:translate-y-2 active:shadow-none group"
+          className="flex flex-col items-center p-8 bg-gradient-to-b from-emerald-500 to-teal-700 border-4 border-emerald-300 rounded-[2.5rem] transition-all shadow-[0_12px_0_0_#042f2e] hover:shadow-[0_18px_0_0_#042f2e] hover:-translate-y-2 active:translate-y-3 active:shadow-none group relative overflow-hidden"
         >
-          <div className="bg-white p-6 rounded-full mb-4 group-hover:scale-110 group-hover:rotate-12 transition-transform shadow-inner text-blue-500">
-            <Play size={48} className="ml-2 fill-blue-500" />
+          <div className="absolute top-0 right-0 p-4 opacity-20 text-6xl group-hover:rotate-45 transition-transform duration-500">
+            🍃
           </div>
-          <span className="text-2xl font-black text-white drop-shadow-md">
-            Joacă
+          <div className="bg-amber-100 p-6 rounded-full mb-4 group-hover:scale-110 transition-transform shadow-[inset_0_4px_10px_rgba(0,0,0,0.2)] text-emerald-600 border-4 border-emerald-400 relative z-10">
+            <Play size={48} className="ml-2 fill-emerald-600" />
+          </div>
+          <span className="text-3xl font-black text-emerald-50 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)] relative z-10">
+            Explorează
           </span>
         </button>
 
         <button
           onClick={() => setView("homework")}
-          className="flex flex-col items-center p-8 bg-gradient-to-b from-orange-400 to-orange-500 border-4 border-orange-600 rounded-[2.5rem] transition-all shadow-[0_10px_0_0_#c2410c] hover:shadow-[0_15px_0_0_#c2410c] hover:-translate-y-2 active:translate-y-2 active:shadow-none group"
+          className="flex flex-col items-center p-8 bg-gradient-to-b from-amber-500 to-orange-700 border-4 border-amber-300 rounded-[2.5rem] transition-all shadow-[0_12px_0_0_#7c2d12] hover:shadow-[0_18px_0_0_#7c2d12] hover:-translate-y-2 active:translate-y-3 active:shadow-none group relative overflow-hidden"
         >
-          <div className="bg-white p-6 rounded-full mb-4 group-hover:scale-110 transition-transform shadow-inner text-orange-500">
-            <BookOpen size={48} className="fill-orange-500 text-orange-500" />
+          <div className="absolute top-0 right-0 p-4 opacity-20 text-6xl group-hover:rotate-45 transition-transform duration-500">
+            📜
           </div>
-          <span className="text-2xl font-black text-white drop-shadow-md text-center">
-            Teme
+          <div className="bg-amber-100 p-6 rounded-full mb-4 group-hover:scale-110 transition-transform shadow-[inset_0_4px_10px_rgba(0,0,0,0.2)] text-orange-600 border-4 border-orange-400 relative z-10">
+            <BookOpen size={48} className="fill-orange-600 text-orange-600" />
+          </div>
+          <span className="text-3xl font-black text-amber-50 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)] relative z-10 text-center">
+            Misiuni
           </span>
         </button>
 
         <button
           onClick={() => setView("shop")}
-          className="flex flex-col items-center p-8 bg-gradient-to-b from-purple-400 to-purple-500 border-4 border-purple-600 rounded-[2.5rem] transition-all shadow-[0_10px_0_0_#581c87] hover:shadow-[0_15px_0_0_#581c87] hover:-translate-y-2 active:translate-y-2 active:shadow-none group"
+          className="flex flex-col items-center p-8 bg-gradient-to-b from-fuchsia-600 to-purple-800 border-4 border-fuchsia-300 rounded-[2.5rem] transition-all shadow-[0_12px_0_0_#4a044e] hover:shadow-[0_18px_0_0_#4a044e] hover:-translate-y-2 active:translate-y-3 active:shadow-none group relative overflow-hidden"
         >
-          <div className="bg-white p-6 rounded-full mb-4 group-hover:scale-110 group-hover:-rotate-12 transition-transform shadow-inner text-purple-500">
-            <ShoppingCart size={48} className="fill-purple-500" />
+          <div className="absolute top-0 right-0 p-4 opacity-20 text-6xl group-hover:-rotate-12 transition-transform duration-500">
+            💎
           </div>
-          <span className="text-2xl font-black text-white drop-shadow-md">
-            Magazin
+          <div className="bg-amber-100 p-6 rounded-full mb-4 group-hover:scale-110 transition-transform shadow-[inset_0_4px_10px_rgba(0,0,0,0.2)] text-purple-600 border-4 border-purple-400 relative z-10">
+            <ShoppingCart size={48} className="fill-purple-600" />
+          </div>
+          <span className="text-3xl font-black text-fuchsia-50 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)] relative z-10">
+            Comori
           </span>
         </button>
       </div>
@@ -760,17 +776,15 @@ function GameScreen({ setPoints, addHistory }) {
 
     switch (type) {
       case 0:
-        // Adunare (numere cu până la 3 cifre)
-        const a1 = Math.floor(Math.random() * 900) + 50; // Numere între 50 și 949
+        const a1 = Math.floor(Math.random() * 900) + 50;
         const b1 = Math.floor(Math.random() * 900) + 50;
         text = `${a1} + ${b1}`;
         correctAnswer = a1 + b1;
         reward = 10;
         break;
       case 1:
-        // Scădere (rezultat pozitiv, numere cu până la 3 cifre)
-        const a2 = Math.floor(Math.random() * 850) + 100; // Numere între 100 și 949
-        const b2 = Math.floor(Math.random() * (a2 - 20)) + 20; // Asigurăm că scăzătorul e mai mic
+        const a2 = Math.floor(Math.random() * 850) + 100;
+        const b2 = Math.floor(Math.random() * (a2 - 20)) + 20;
         text = `${a2} - ${b2}`;
         correctAnswer = a2 - b2;
         reward = 10;
@@ -851,11 +865,11 @@ function GameScreen({ setPoints, addHistory }) {
     if (numAnswer === problem.answer) {
       setFeedback({
         type: "success",
-        message: `Bravo! Ai primit ${problem.reward} puncte.`,
+        message: `Ai primit ${problem.reward} comori.`,
       });
       setPoints((prev) => prev + problem.reward);
       addHistory(
-        `Răspuns corect: ${problem.text} = ${problem.answer}`,
+        `Provocare completată: ${problem.text} = ${problem.answer}`,
         problem.reward,
         "earn",
       );
@@ -864,8 +878,8 @@ function GameScreen({ setPoints, addHistory }) {
         generateProblem();
       }, 2500);
     } else {
-      setFeedback({ type: "error", message: `Greșit. Încearcă din nou!` });
-      addHistory(`Răspuns greșit la: ${problem.text}`, 0, "fail");
+      setFeedback({ type: "error", message: `Greșit. Mai încearcă!` });
+      addHistory(`Ai ratat provocarea: ${problem.text}`, 0, "fail");
       setAnswer("");
       if (inputRef.current) inputRef.current.focus();
     }
@@ -874,62 +888,74 @@ function GameScreen({ setPoints, addHistory }) {
   if (!problem)
     return (
       <div className="text-center mt-20 relative z-10">
-        <Loader2 className="animate-spin mx-auto text-blue-500" size={64} />
+        <Loader2 className="animate-spin mx-auto text-amber-400" size={64} />
       </div>
     );
 
   return (
-    <div className="max-w-xl mx-auto mt-10 animate-fade-in relative z-10">
-      <div className="bg-white/90 backdrop-blur-sm rounded-[3rem] shadow-2xl overflow-hidden border-4 border-white transform transition-transform hover:scale-[1.01] duration-300">
-        <div className="bg-gradient-to-r from-blue-400 via-blue-500 to-indigo-500 p-8 text-center relative overflow-hidden">
-          <div className="absolute inset-0 bg-math-pattern opacity-50"></div>
+    <div className="max-w-xl mx-auto mt-6 animate-fade-in relative z-10">
+      <div className="bg-amber-50 rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden border-8 border-amber-700/80 transform transition-transform duration-300 relative">
+        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#8b5cf6_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none"></div>
+
+        <div className="bg-gradient-to-b from-amber-800 to-amber-950 p-8 text-center relative overflow-hidden border-b-8 border-amber-900/50">
+          <div className="absolute inset-0 bg-magic-pattern opacity-20"></div>
+
           <div className="relative z-10">
-            <h2 className="text-white text-xl font-black opacity-90 uppercase tracking-widest mb-4 drop-shadow-sm">
-              Rezolvă exercițiul
-            </h2>
-            <div className="text-white font-black drop-shadow-lg tracking-wider transition-all duration-500 text-7xl animate-float">
+            <div className="inline-block bg-amber-900/50 px-6 py-2 rounded-full mb-6 border border-amber-500/30">
+              <h2 className="text-amber-200 text-sm font-black uppercase tracking-[0.3em] drop-shadow-sm flex items-center gap-2">
+                <span>🐾</span> Provocarea Pisicii <span>🐾</span>
+              </h2>
+            </div>
+
+            <div className="text-amber-50 font-black drop-shadow-[0_5px_10px_rgba(0,0,0,0.6)] tracking-wider transition-all duration-500 text-7xl animate-float">
               {problem.text} = ?
             </div>
-            <div className="mt-6 inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-full text-white text-base font-bold border-2 border-white/30 shadow-inner">
+
+            <div className="mt-8 inline-flex items-center gap-3 bg-amber-100/10 backdrop-blur-md px-6 py-3 rounded-full text-amber-100 text-lg font-black border-2 border-amber-500/40 shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]">
               <Star
-                size={20}
-                className="fill-yellow-300 text-yellow-300 animate-wiggle"
-              />{" "}
-              Recompensă: {problem.reward} puncte
+                size={24}
+                className="fill-amber-400 text-amber-400 animate-pulse"
+              />
+              Recompensă: {problem.reward} comori
             </div>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-8 pt-6">
+        <form
+          onSubmit={handleSubmit}
+          className="p-8 pt-10 relative z-10 bg-amber-50"
+        >
           <input
             ref={inputRef}
             type="number"
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
-            className="w-full text-center text-5xl font-black p-6 bg-slate-50 border-4 border-slate-200 rounded-[2rem] focus:border-blue-500 focus:bg-white focus:outline-none transition-all shadow-inner text-blue-900 placeholder:text-slate-300"
+            className="w-full text-center text-6xl font-black p-8 bg-amber-100/50 border-4 border-amber-600/30 rounded-[2.5rem] focus:border-amber-600 focus:bg-white focus:outline-none transition-all shadow-[inset_0_4px_15px_rgba(0,0,0,0.1)] text-amber-950 placeholder:text-amber-300/50 font-serif"
             placeholder="..."
             autoFocus
           />
 
           <button
             type="submit"
-            className="w-full mt-8 bg-gradient-to-b from-green-400 to-green-500 hover:from-green-300 hover:to-green-400 text-white text-3xl font-black py-5 rounded-3xl border-4 border-green-600 shadow-[0_8px_0_0_#166534] hover:shadow-[0_12px_0_0_#166534] active:translate-y-2 active:shadow-none transition-all flex justify-center items-center gap-3 group"
+            className="w-full mt-8 bg-gradient-to-b from-emerald-500 to-teal-700 hover:from-emerald-400 hover:to-teal-600 text-amber-50 text-3xl font-black py-6 rounded-[2rem] border-4 border-emerald-800 shadow-[0_10px_0_0_#064e3b] active:translate-y-3 active:shadow-none transition-all flex justify-center items-center gap-3 group relative overflow-hidden"
           >
-            Verifică{" "}
+            <div className="absolute inset-0 bg-white/10 group-hover:bg-white/20 transition-colors"></div>
+            Miau! Verifică{" "}
             <Check
-              size={36}
-              className="group-hover:scale-125 transition-transform"
+              size={40}
+              className="group-hover:scale-125 transition-transform drop-shadow-md"
             />
           </button>
         </form>
 
         {feedback && (
-          <div
-            className={`p-6 mx-8 mb-8 rounded-3xl font-black text-center text-xl shadow-inner border-4 ${feedback.type === "success" ? "bg-gradient-to-r from-green-200 to-green-300 text-green-900 animate-pop border-green-400" : "bg-gradient-to-r from-red-200 to-red-300 text-red-900 animate-wiggle border-red-400"}`}
-          >
-            {feedback.type === "success" ? "🎉 " : "💥 "}
-            {feedback.message}
-            {feedback.type === "success" ? " 🥳" : " 🧐"}
+          <div className="px-8 pb-8 bg-amber-50">
+            <div
+              className={`p-6 rounded-[2rem] font-black text-center text-xl shadow-inner border-4 ${feedback.type === "success" ? "bg-gradient-to-r from-emerald-100 to-emerald-200 text-emerald-900 animate-pop border-emerald-400" : "bg-gradient-to-r from-rose-100 to-rose-200 text-rose-900 animate-wiggle border-rose-400"}`}
+            >
+              {feedback.type === "success" ? "🐟 Prrfect! " : "🙀 Miau... "}
+              {feedback.message}
+            </div>
           </div>
         )}
       </div>
