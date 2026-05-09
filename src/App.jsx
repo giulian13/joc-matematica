@@ -504,6 +504,7 @@ export default function App() {
   const [levelProgress, setLevelProgress] = useState(0);
   const [currentPlayingLevel, setCurrentPlayingLevel] = useState(1);
   const [petState, setPetState] = useState({ food: 100, joy: 100, energy: 100, lastInteraction: Date.now() });
+  const [parentPin, setParentPin] = useState(null);
 
   // Stări pentru Firebase
   const [user, setUser] = useState(null);
@@ -573,6 +574,7 @@ export default function App() {
             setHomework(data.homework ?? []);
             setMaxLevel(data.maxLevel ?? 1);
             setLevelProgress(data.levelProgress ?? 0);
+            setParentPin(data.parentPin ?? null);
             
             let loadedPet = data.petState ?? { food: 100, joy: 100, energy: 100, lastInteraction: Date.now() };
             const now = Date.now();
@@ -603,6 +605,7 @@ export default function App() {
             setMaxLevel(1);
             setLevelProgress(0);
             setPetState({ food: 100, joy: 100, energy: 100, lastInteraction: Date.now() });
+            setParentPin(null);
           }
           isDataLoaded.current = true;
           setDbLoading(false);
@@ -632,13 +635,13 @@ export default function App() {
       );
       setDoc(
         docRef,
-        { points, history, inventory, shopItems, homework, maxLevel, levelProgress, petState },
+        { points, history, inventory, shopItems, homework, maxLevel, levelProgress, petState, parentPin },
         { merge: true },
       ).catch((err) => console.error("Eroare Firebase la salvare:", err));
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [points, history, inventory, shopItems, homework, maxLevel, levelProgress, petState, user]);
+  }, [points, history, inventory, shopItems, homework, maxLevel, levelProgress, petState, user, parentPin]);
 
   const addHistory = (message, amount, type = "earn") => {
     const timestamp = new Date().toLocaleTimeString("ro-RO", {
@@ -724,7 +727,10 @@ export default function App() {
 
           <div className="flex items-center gap-4">
             <button
-              onClick={() => setView("parent")}
+              onClick={() => {
+                if (parentPin) setView("pin_entry");
+                else setView("parent");
+              }}
               className="p-2.5 bg-indigo-800/80 hover:bg-indigo-700 rounded-full transition-colors flex items-center justify-center border-2 border-indigo-500 shadow-inner"
               title="Zona Părinților"
             >
@@ -802,7 +808,18 @@ export default function App() {
             setHomework={setHomework}
           />
         )}
+        {view === "pin_entry" && (
+          <PinEntryScreen
+            correctPin={parentPin}
+            onCorrect={() => setView("parent")}
+            onCancel={() => setView("menu")}
+          />
+        )}
       </main>
+
+      {user && parentPin === null && !dbLoading && (
+        <PinSetupScreen setParentPin={setParentPin} />
+      )}
     </div>
   );
 }
@@ -2115,3 +2132,136 @@ function ParentDashboard({
     </div>
   );
 }
+
+// ==========================================
+// ECRANE SECURITATE PIN
+// ==========================================
+
+function PinSetupScreen({ setParentPin }) {
+  const [pin, setPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
+  const [error, setError] = useState("");
+
+  const handleSave = () => {
+    if (pin.length !== 4) {
+      setError("PIN-ul trebuie să aibă 4 cifre!");
+      return;
+    }
+    if (pin !== confirmPin) {
+      setError("PIN-urile nu coincid!");
+      return;
+    }
+    setParentPin(pin);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] bg-indigo-950/95 backdrop-blur-xl flex items-center justify-center p-4">
+      <div className="bg-white rounded-[3rem] p-8 max-w-sm w-full text-center shadow-2xl border-8 border-amber-400 animate-fade-in relative overflow-hidden">
+        <div className="absolute -top-10 -right-10 text-9xl opacity-10 rotate-12 pointer-events-none">😼</div>
+        <div className="text-6xl mb-4 drop-shadow-md">🔐</div>
+        <h2 className="text-3xl font-black text-indigo-900 mb-2">Setează PIN Părinte</h2>
+        <p className="text-slate-500 mb-6 font-bold leading-tight">Acest cod va fi necesar pentru a intra în Zona Părinților.</p>
+        
+        {error && <div className="bg-red-50 text-red-600 p-3 rounded-2xl mb-4 font-black border-2 border-red-200 animate-wiggle">{error}</div>}
+        
+        <div className="space-y-4">
+          <input 
+            type="password" 
+            maxLength={4} 
+            inputMode="numeric"
+            placeholder="PIN nou (4 cifre)" 
+            value={pin}
+            onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
+            className="w-full text-center text-3xl p-4 border-4 border-indigo-50 rounded-2xl focus:border-amber-400 outline-none font-black tracking-[0.5em] shadow-inner transition-colors"
+          />
+          <input 
+            type="password" 
+            maxLength={4} 
+            inputMode="numeric"
+            placeholder="Confirmă PIN" 
+            value={confirmPin}
+            onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, ""))}
+            className="w-full text-center text-3xl p-4 border-4 border-indigo-50 rounded-2xl focus:border-amber-400 outline-none font-black tracking-[0.5em] shadow-inner transition-colors"
+          />
+          <button 
+            onClick={handleSave}
+            className="w-full bg-gradient-to-b from-amber-400 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-white font-black py-4 rounded-2xl shadow-[0_8px_0_0_#92400e] active:translate-y-1 active:shadow-none transition-all text-xl mt-4 border-t-2 border-amber-200"
+          >
+            Salvează PIN-ul
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PinEntryScreen({ correctPin, onCorrect, onCancel }) {
+  const [input, setInput] = useState("");
+  const [isError, setIsError] = useState(false);
+
+  const handleKey = (num) => {
+    if (input.length < 4) {
+      const newInput = input + num;
+      setInput(newInput);
+      if (newInput.length === 4) {
+        if (newInput === correctPin) {
+          onCorrect();
+        } else {
+          setIsError(true);
+          setTimeout(() => {
+            setInput("");
+            setIsError(false);
+          }, 600);
+        }
+      }
+    }
+  };
+
+  const handleBackspace = () => {
+    setInput(input.slice(0, -1));
+  };
+
+  return (
+    <div className="bg-white/95 backdrop-blur-md rounded-[3rem] shadow-2xl border-4 border-white overflow-hidden mt-6 relative z-10 max-w-md mx-auto animate-fade-in p-8 text-center border-b-[12px] border-indigo-100">
+      <div className="text-5xl mb-3">🐱</div>
+      <h2 className="text-3xl font-black text-indigo-950 mb-2">Acces Securizat</h2>
+      <p className="text-slate-500 mb-8 font-bold">Introdu codul PIN pentru părinți</p>
+      
+      <div className={`flex justify-center gap-5 mb-10 ${isError ? 'animate-wiggle' : ''}`}>
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className={`w-8 h-8 rounded-full border-4 transition-all duration-300 ${input.length > i ? 'bg-indigo-600 border-indigo-400 scale-110 shadow-lg shadow-indigo-200' : 'border-slate-100 bg-slate-50 shadow-inner'}`}></div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-3 gap-4 mb-8">
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+          <button 
+            key={num} 
+            onClick={() => handleKey(num)}
+            className="h-20 bg-slate-50 hover:bg-white text-3xl font-black text-indigo-900 rounded-[1.5rem] shadow-[0_6px_0_0_#e2e8f0] hover:shadow-[0_8px_0_0_#e2e8f0] active:translate-y-1 active:shadow-none transition-all border-2 border-slate-100 active:bg-indigo-50"
+          >
+            {num}
+          </button>
+        ))}
+        <div className="h-20"></div>
+        <button 
+          onClick={() => handleKey(0)}
+          className="h-20 bg-slate-50 hover:bg-white text-3xl font-black text-indigo-900 rounded-[1.5rem] shadow-[0_6px_0_0_#e2e8f0] hover:shadow-[0_8px_0_0_#e2e8f0] active:translate-y-1 active:shadow-none transition-all border-2 border-slate-100 active:bg-indigo-50"
+        >
+          0
+        </button>
+        <button 
+          onClick={handleBackspace}
+          className="h-20 bg-indigo-50 hover:bg-indigo-100 text-2xl font-black text-indigo-600 rounded-[1.5rem] shadow-[0_6px_0_0_#c7d2fe] hover:shadow-[0_8px_0_0_#c7d2fe] active:translate-y-1 active:shadow-none transition-all border-2 border-indigo-100 flex items-center justify-center"
+        >
+          <Delete size={32} />
+        </button>
+      </div>
+
+      <button onClick={onCancel} className="text-slate-400 font-bold hover:text-indigo-600 transition-colors uppercase tracking-widest text-sm">
+        Înapoi la aventură
+      </button>
+    </div>
+  );
+}
+
