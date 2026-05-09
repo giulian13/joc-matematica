@@ -1895,15 +1895,23 @@ function ParentDashboard({
                     <input type="number" required value={newItemCost} onChange={(e) => setNewItemCost(e.target.value)} className="w-full p-4 border-2 border-purple-200 rounded-2xl font-bold focus:border-purple-500 outline-none" placeholder="Ex: 100" />
                   </div>
                 </div>
-                <div className="flex gap-4">
-                  <div className="text-left">
-                    <label className="block text-xs font-black text-purple-400 uppercase tracking-widest ml-2 mb-1">Iconiță</label>
-                    <input type="text" required value={newItemIcon} onChange={(e) => setNewItemIcon(e.target.value)} className="w-20 p-4 border-2 border-purple-200 rounded-2xl text-center text-2xl" />
+                <div className="text-left">
+                  <label className="block text-xs font-black text-purple-400 uppercase tracking-widest ml-2 mb-2">Alege o Iconiță</label>
+                  <div className="flex flex-wrap gap-2 p-4 bg-white border-2 border-purple-100 rounded-3xl">
+                    {["🎁", "🍦", "🎮", "🧸", "🍫", "🍕", "🎞️", "⚽", "🎨", "🚲", "🍭", "📚", "🦸", "⭐", "🏆", "🏖️"].map(emoji => (
+                      <button
+                        key={emoji}
+                        type="button"
+                        onClick={() => setNewItemIcon(emoji)}
+                        className={`text-2xl p-2 rounded-xl transition-all ${newItemIcon === emoji ? 'bg-purple-100 scale-125 shadow-inner' : 'hover:bg-slate-50 opacity-50 hover:opacity-100'}`}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
                   </div>
-                  <div className="flex-1 text-left">
-                    <label className="block text-xs font-black text-purple-400 uppercase tracking-widest ml-2 mb-1">&nbsp;</label>
-                    <button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 text-white font-black py-4 rounded-2xl shadow-[0_6px_0_0_#581c87] active:translate-y-1 active:shadow-none transition-all">Adaugă Premiul</button>
-                  </div>
+                </div>
+                <div className="text-left mt-4">
+                  <button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 text-white font-black py-4 rounded-2xl shadow-[0_6px_0_0_#581c87] active:translate-y-1 active:shadow-none transition-all">Adaugă Premiul</button>
                 </div>
               </form>
             </div>
