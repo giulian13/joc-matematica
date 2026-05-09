@@ -133,7 +133,7 @@ const INITIAL_SHOP_ITEMS = [
   },
   {
     id: 6,
-    name: "Schimbare Nume Teo",
+    name: "Schimbare Nume Pet",
     cost: 870,
     icon: "🏷️",
     description: "Ai dreptul să îi pui animalului tău virtual un nume nou, ales de tine!",
@@ -563,7 +563,7 @@ export default function App() {
   const [maxLevel, setMaxLevel] = useState(1);
   const [levelProgress, setLevelProgress] = useState(0);
   const [currentPlayingLevel, setCurrentPlayingLevel] = useState(1);
-  const [petState, setPetState] = useState({ name: "Teo", food: 100, joy: 100, energy: 100, lastInteraction: Date.now(), playUntil: null, playImage: null });
+  const [petState, setPetState] = useState({ name: "Pet", food: 100, joy: 100, energy: 100, lastInteraction: Date.now(), playUntil: null, playImage: null });
   const [parentPin, setParentPin] = useState(null);
   const [resetPinRequested, setResetPinRequested] = useState(false);
   const [analytics, setAnalytics] = useState({
@@ -660,7 +660,7 @@ export default function App() {
               // Actualizarea în Firebase se va face prin useEffect-ul de salvare
             }
             
-            let loadedPet = data.petState ?? { name: "Teo", food: 100, joy: 100, energy: 100, lastInteraction: Date.now(), playUntil: null, playImage: null };
+            let loadedPet = data.petState ?? { name: "Pet", food: 100, joy: 100, energy: 100, lastInteraction: Date.now(), playUntil: null, playImage: null };
             const now = Date.now();
             
             if (loadedPet.sleepUntil && now >= loadedPet.sleepUntil) {
@@ -688,7 +688,7 @@ export default function App() {
             setHomework([]);
             setMaxLevel(1);
             setLevelProgress(0);
-            setPetState({ name: "Teo", food: 100, joy: 100, energy: 100, lastInteraction: Date.now(), playUntil: null, playImage: null });
+            setPetState({ name: "Pet", food: 100, joy: 100, energy: 100, lastInteraction: Date.now(), playUntil: null, playImage: null });
             setParentPin(null);
           }
           isDataLoaded.current = true;
@@ -862,7 +862,7 @@ export default function App() {
       </header>
 
       <main className="max-w-4xl mx-auto p-4 py-8">
-        {view === "menu" && <MainMenu setView={setView} />}
+        {view === "menu" && <MainMenu setView={setView} petState={petState} />}
         {view === "map" && (
           <MapScreen
             setView={setView}
@@ -921,6 +921,8 @@ export default function App() {
             setHomework={setHomework}
             analytics={analytics}
             setView={setView}
+            petState={petState}
+            setPetState={setPetState}
           />
         )}
         {view === "pin_entry" && (
@@ -955,7 +957,7 @@ export default function App() {
 // ==========================================
 // MENIUL PRINCIPAL
 // ==========================================
-function MainMenu({ setView }) {
+function MainMenu({ setView, petState }) {
   return (
     <div className="flex flex-col items-center justify-center space-y-8 animate-fade-in mt-6 relative z-10">
       <div className="relative">
@@ -1032,7 +1034,7 @@ function MainMenu({ setView }) {
             <span className="text-5xl">🐾</span>
           </div>
           <span className="text-3xl font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)] relative z-10">
-            Prietenul Teo
+            Prietenul {petState.name}
           </span>
         </button>
       </div>
@@ -1690,6 +1692,8 @@ function ParentDashboard({
   setHomework,
   analytics,
   setView,
+  petState,
+  setPetState,
 }) {
   const [activeTab, setActiveTab] = useState("stats");
   const [newItemName, setNewItemName] = useState("");
