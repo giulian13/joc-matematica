@@ -315,7 +315,30 @@ const getBackgroundClass = (level) => {
 // ECRANUL PRIETENULUI TEO (TAMAGOTCHI)
 // ==========================================
 function PetScreen({ petState, setPetState, points, setPoints, addHistory, setView }) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (petState.sleepUntil && now >= petState.sleepUntil) {
+       setPetState((prev) => ({ ...prev, sleepUntil: null, energy: 100 }));
+    }
+  }, [now, petState.sleepUntil, setPetState]);
+
+  const isSleeping = petState.sleepUntil && now < petState.sleepUntil;
+  const minsRemaining = isSleeping ? Math.floor((petState.sleepUntil - now) / 60000) : 0;
+  const secsRemaining = isSleeping ? Math.floor(((petState.sleepUntil - now) % 60000) / 1000) : 0;
+  const timeDisplay = `${minsRemaining}:${secsRemaining.toString().padStart(2, '0')}`;
+
   const handleAction = (actionType) => {
+    if (petState.isDead && actionType !== "revive") {
+       return alert("Teo ne-a părăsit... Trebuie să îl reînvii mai întâi!");
+    }
+    if (isSleeping) {
+      return alert("Shh! Teo doarme. Revino după ce se trezește!");
+    }
     let cost = 0;
     let newFood = petState.food;
     let newJoy = petState.joy;
@@ -342,8 +365,22 @@ function PetScreen({ petState, setPetState, points, setPoints, addHistory, setVi
       message = "Te-ai jucat cu Teo! Este foarte fericit.";
     } else if (actionType === "sleep") {
       cost = 0;
-      newEnergy = 100;
-      message = "Teo s-a odihnit și are energia la maxim!";
+      setPetState({
+        ...petState,
+        sleepUntil: Date.now() + 15 * 60 * 1000,
+        lastInteraction: Date.now()
+      });
+      addHistory("Teo s-a dus la culcare pentru 15 minute.", 0, "info");
+      return;
+    } else if (actionType === "revive") {
+      cost = 300;
+      if (points < cost) return alert("Nu ai suficiente comori pentru a-l reînvia!");
+      setPetState({
+        food: 100, joy: 100, energy: 100, isDead: false, lastInteraction: Date.now(), sleepUntil: null
+      });
+      setPoints((prev) => prev - cost);
+      addHistory("O minune! Teo a revenit la viață, fericit și plin de energie!", -cost, "spend");
+      return;
     }
 
     if (cost > 0) {
@@ -357,7 +394,8 @@ function PetScreen({ petState, setPetState, points, setPoints, addHistory, setVi
       food: newFood,
       joy: newJoy,
       energy: newEnergy,
-      lastInteraction: Date.now()
+      lastInteraction: Date.now(),
+      sleepUntil: petState.sleepUntil
     });
   };
 
@@ -374,55 +412,83 @@ function PetScreen({ petState, setPetState, points, setPoints, addHistory, setVi
       </div>
 
       <div className="flex justify-center mb-8 relative">
-        <img src="/teo_virtual_pet.png" alt="Teo Virtual Pet" className={`w-64 h-64 object-contain ${petState.joy > 70 ? 'animate-float' : 'animate-wiggle'}`} />
-      </div>
-
-      <div className="space-y-4 mb-8 text-left">
-        <div className="bg-slate-100 p-4 rounded-2xl border border-slate-200">
-          <div className="flex justify-between mb-1">
-            <span className="font-bold flex items-center gap-2">🍗 Hrană</span>
-            <span className="font-bold text-slate-600">{petState.food}%</span>
-          </div>
-          <div className="w-full bg-slate-300 rounded-full h-4">
-            <div className={`h-4 rounded-full transition-all duration-1000 ${petState.food < 30 ? 'bg-red-500' : 'bg-emerald-500'}`} style={{ width: `${petState.food}%` }}></div>
-          </div>
-        </div>
-        
-        <div className="bg-slate-100 p-4 rounded-2xl border border-slate-200">
-          <div className="flex justify-between mb-1">
-            <span className="font-bold flex items-center gap-2">🎾 Bucurie</span>
-            <span className="font-bold text-slate-600">{petState.joy}%</span>
-          </div>
-          <div className="w-full bg-slate-300 rounded-full h-4">
-            <div className={`h-4 rounded-full transition-all duration-1000 ${petState.joy < 30 ? 'bg-red-500' : 'bg-blue-500'}`} style={{ width: `${petState.joy}%` }}></div>
-          </div>
-        </div>
-
-        <div className="bg-slate-100 p-4 rounded-2xl border border-slate-200">
-          <div className="flex justify-between mb-1">
-            <span className="font-bold flex items-center gap-2">💤 Energie</span>
-            <span className="font-bold text-slate-600">{petState.energy}%</span>
-          </div>
-          <div className="w-full bg-slate-300 rounded-full h-4">
-            <div className={`h-4 rounded-full transition-all duration-1000 ${petState.energy < 30 ? 'bg-red-500' : 'bg-yellow-500'}`} style={{ width: `${petState.energy}%` }}></div>
-          </div>
+        <div className="relative">
+          <img src="/teo_virtual_pet.png" alt="Teo Virtual Pet" className={`w-64 h-64 object-contain transition-all duration-1000 ${petState.isDead ? 'opacity-40 grayscale contrast-125 sepia blur-[1px]' : isSleeping ? 'opacity-70 grayscale' : (petState.joy > 70 ? 'animate-float' : 'animate-wiggle')}`} />
+          {isSleeping && !petState.isDead && (
+            <div className="absolute top-0 right-0 animate-bounce text-4xl">💤</div>
+          )}
+          {petState.isDead && (
+            <div className="absolute -top-4 right-0 text-6xl drop-shadow-md animate-pulse">👻</div>
+          )}
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <button onClick={() => handleAction('fish')} className="bg-orange-100 hover:bg-orange-200 text-orange-800 font-bold p-4 rounded-2xl border-2 border-orange-300 flex flex-col items-center justify-center transition-colors">
-          <span className="text-3xl mb-1">🐟</span> Hrănește (20⭐)
-        </button>
-        <button onClick={() => handleAction('dessert')} className="bg-pink-100 hover:bg-pink-200 text-pink-800 font-bold p-4 rounded-2xl border-2 border-pink-300 flex flex-col items-center justify-center transition-colors">
-          <span className="text-3xl mb-1">🧁</span> Desert (10⭐)
-        </button>
-        <button onClick={() => handleAction('play')} className="bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold p-4 rounded-2xl border-2 border-blue-300 flex flex-col items-center justify-center transition-colors">
-          <span className="text-3xl mb-1">🎾</span> Joacă-te (30⭐)
-        </button>
-        <button onClick={() => handleAction('sleep')} className="bg-indigo-100 hover:bg-indigo-200 text-indigo-800 font-bold p-4 rounded-2xl border-2 border-indigo-300 flex flex-col items-center justify-center transition-colors">
-          <span className="text-3xl mb-1">💤</span> Somn (0⭐)
-        </button>
-      </div>
+      {petState.isDead ? (
+        <div className="bg-red-50 text-red-900 p-6 rounded-[2rem] mb-8 font-bold border-4 border-red-200 shadow-inner">
+          <h3 className="text-2xl mb-3 text-red-600 font-black">Oh nu... Teo ne-a părăsit! 😭</h3>
+          <p className="text-red-800/80 mb-6 font-medium leading-relaxed">
+            A stat prea mult timp fără mâncare. Ai pierdut toate comorile. Ai nevoie de <strong className="text-red-700 bg-red-200 px-2 py-1 rounded">300⭐</strong> din Pădurea Magică pentru a-l aduce înapoi!
+          </p>
+          <button onClick={() => handleAction('revive')} className="w-full bg-gradient-to-b from-red-500 to-rose-700 hover:from-red-600 hover:to-rose-800 text-white shadow-[0_8px_0_0_#9f1239] active:shadow-none active:translate-y-2 p-5 rounded-2xl text-xl font-black flex items-center justify-center gap-3 transition-all border-2 border-red-400">
+            ✨ Reînvie-l pe Teo (300⭐)
+          </button>
+        </div>
+      ) : (
+        <>
+          {isSleeping && (
+            <div className="bg-indigo-100 text-indigo-800 p-4 rounded-2xl mb-8 font-bold border-2 border-indigo-300 animate-pulse">
+              Teo doarme... Se trezește în {timeDisplay}
+            </div>
+          )}
+
+          <div className="space-y-4 mb-8 text-left">
+            <div className="bg-slate-100 p-4 rounded-2xl border border-slate-200">
+              <div className="flex justify-between mb-1">
+                <span className="font-bold flex items-center gap-2">🍗 Hrană</span>
+                <span className="font-bold text-slate-600">{petState.food}%</span>
+              </div>
+              <div className="w-full bg-slate-300 rounded-full h-4">
+                <div className={`h-4 rounded-full transition-all duration-1000 ${petState.food < 30 ? 'bg-red-500' : 'bg-emerald-500'}`} style={{ width: `${petState.food}%` }}></div>
+              </div>
+            </div>
+            
+            <div className="bg-slate-100 p-4 rounded-2xl border border-slate-200">
+              <div className="flex justify-between mb-1">
+                <span className="font-bold flex items-center gap-2">🎾 Bucurie</span>
+                <span className="font-bold text-slate-600">{petState.joy}%</span>
+              </div>
+              <div className="w-full bg-slate-300 rounded-full h-4">
+                <div className={`h-4 rounded-full transition-all duration-1000 ${petState.joy < 30 ? 'bg-red-500' : 'bg-blue-500'}`} style={{ width: `${petState.joy}%` }}></div>
+              </div>
+            </div>
+
+            <div className="bg-slate-100 p-4 rounded-2xl border border-slate-200">
+              <div className="flex justify-between mb-1">
+                <span className="font-bold flex items-center gap-2">💤 Energie</span>
+                <span className="font-bold text-slate-600">{petState.energy}%</span>
+              </div>
+              <div className="w-full bg-slate-300 rounded-full h-4">
+                <div className={`h-4 rounded-full transition-all duration-1000 ${petState.energy < 30 ? 'bg-red-500' : 'bg-yellow-500'}`} style={{ width: `${petState.energy}%` }}></div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <button onClick={() => handleAction('fish')} className="bg-orange-100 hover:bg-orange-200 text-orange-800 font-bold p-4 rounded-2xl border-2 border-orange-300 flex flex-col items-center justify-center transition-colors">
+              <span className="text-3xl mb-1">🐟</span> Hrănește (20⭐)
+            </button>
+            <button onClick={() => handleAction('dessert')} className="bg-pink-100 hover:bg-pink-200 text-pink-800 font-bold p-4 rounded-2xl border-2 border-pink-300 flex flex-col items-center justify-center transition-colors">
+              <span className="text-3xl mb-1">🧁</span> Desert (10⭐)
+            </button>
+            <button onClick={() => handleAction('play')} className="bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold p-4 rounded-2xl border-2 border-blue-300 flex flex-col items-center justify-center transition-colors">
+              <span className="text-3xl mb-1">🎾</span> Joacă-te (30⭐)
+            </button>
+            <button onClick={() => handleAction('sleep')} className="bg-indigo-100 hover:bg-indigo-200 text-indigo-800 font-bold p-4 rounded-2xl border-2 border-indigo-300 flex flex-col items-center justify-center transition-colors">
+              <span className="text-3xl mb-1">💤</span> Somn (0⭐)
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -510,6 +576,12 @@ export default function App() {
             
             let loadedPet = data.petState ?? { food: 100, joy: 100, energy: 100, lastInteraction: Date.now() };
             const now = Date.now();
+            
+            if (loadedPet.sleepUntil && now >= loadedPet.sleepUntil) {
+              loadedPet.sleepUntil = null;
+              loadedPet.energy = 100;
+            }
+
             const hoursPassed = (now - loadedPet.lastInteraction) / (1000 * 60 * 60);
             if (hoursPassed > 0.1) {
               const degrade = Math.floor(hoursPassed * 10);
@@ -517,7 +589,7 @@ export default function App() {
                 ...loadedPet,
                 food: Math.max(0, loadedPet.food - degrade),
                 joy: Math.max(0, loadedPet.joy - degrade),
-                energy: Math.min(100, loadedPet.energy + Math.floor(hoursPassed * 20)),
+                energy: loadedPet.sleepUntil ? loadedPet.energy : Math.min(100, loadedPet.energy + Math.floor(hoursPassed * 20)),
                 lastInteraction: now
               };
             }
