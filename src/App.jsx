@@ -57,7 +57,7 @@ import {
   signInWithPopup,
   sendPasswordResetEmail,
 } from "firebase/auth";
-import { getFirestore, doc, setDoc, onSnapshot } from "firebase/firestore";
+import { getFirestore, doc, setDoc, onSnapshot, collection, getDocs, query, updateDoc } from "firebase/firestore";
 
 const getFirebaseConfig = () => {
   // 1. Mediul Canvas (pentru testare aici)
@@ -663,6 +663,7 @@ export default function App() {
   const isDataLoaded = useRef(false);
   const [isParentAuthorized, setIsParentAuthorized] = useState(false);
   const [lastActivity, setLastActivity] = useState(Date.now());
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   // Preîncărcare imagini pentru caching browser
   useEffect(() => {
@@ -690,7 +691,11 @@ export default function App() {
 
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
-      if (!u) {
+      if (u) {
+        // Poți schimba email-ul de admin aici
+        setIsSuperAdmin(u.email === "gurau.iulian92@gmail.com");
+      } else {
+        setIsSuperAdmin(false);
         setDbLoading(false);
       }
     });
@@ -1025,6 +1030,16 @@ export default function App() {
               </button>
             </div>
 
+            {isSuperAdmin && (
+              <button
+                onClick={() => setView("admin")}
+                className="p-2 bg-slate-800 hover:bg-slate-900 rounded-full transition-all flex items-center justify-center border-2 border-slate-700 shadow-lg hover:scale-110"
+                title="Panou Administrare"
+              >
+                <Settings size={20} className="text-slate-100" />
+              </button>
+            )}
+
             <button
               onClick={() => {
                 if (parentPin) {
@@ -1122,6 +1137,9 @@ export default function App() {
             lang={lang}
             t={t}
           />
+        )}
+        {view === "admin" && isSuperAdmin && (
+          <AdminDashboard setView={setView} lang={lang} t={t} />
         )}
         {view === "pin_entry" && (
           <PinEntryScreen
@@ -2328,6 +2346,137 @@ function ParentDashboard({
                 <button type="submit" className="w-full bg-amber-500 hover:bg-amber-600 text-white font-black py-5 rounded-[2rem] shadow-[0_8px_0_0_#92400e] active:translate-y-1 active:shadow-none transition-all text-xl">{lang === "ro" ? "Actualizează Portofelul" : "Update Wallet"}</button>
               </form>
             </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// 🛡️ ZONA SUPER ADMIN (GESTIONARE GLOBALĂ)
+// ==========================================
+function AdminDashboard({ setView, lang, t }) {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  
+  useEffect(() => {
+    const fetchUsers = async () => {
+      setLoading(true);
+      try {
+        const usersRef = collection(db, "artifacts", APP_ID, "users");
+        const querySnapshot = await getDocs(usersRef);
+        const usersList = [];
+        querySnapshot.forEach((doc) => {
+          usersList.push({ id: doc.id, ...doc.data() });
+        });
+        setUsers(usersList);
+      } catch (err) {
+        console.error("Error fetching users:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUsers();
+  }, []);
+
+  const handleUpdatePoints = async (userId, currentPoints, amount) => {
+    try {
+      const userDocRef = doc(db, "artifacts", APP_ID, "users", userId, "gameData", "state");
+      await updateDoc(userDocRef, {
+        points: (currentPoints || 0) + amount
+      });
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, points: (u.points || 0) + amount } : u));
+    } catch (err) {
+      alert("Eroare la actualizarea punctelor!");
+    }
+  };
+
+  const filteredUsers = users.filter(u => 
+    u.id.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    (u.name && u.name.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
+  return (
+    <div className="bg-white/95 backdrop-blur-md rounded-[3rem] shadow-2xl overflow-hidden border-4 border-slate-800 animate-fade-in relative z-10 max-w-5xl mx-auto">
+      <div className="bg-slate-800 p-8 text-white flex justify-between items-center">
+        <div className="text-left">
+          <h2 className="text-white/60 text-xs font-black uppercase tracking-widest mb-1">Super Admin</h2>
+          <div className="text-3xl font-black">Control Panel</div>
+        </div>
+        <button 
+          onClick={() => setView("menu")}
+          className="bg-white/10 hover:bg-white/20 p-3 rounded-2xl border border-white/20 transition-colors flex items-center gap-2 font-bold"
+        >
+          <ArrowLeft size={20} /> {t("exit")}
+        </button>
+      </div>
+
+      <div className="p-8">
+        <div className="flex gap-4 mb-8">
+          <div className="flex-1 text-left">
+            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest ml-2 mb-1">Căutare utilizatori</label>
+            <input 
+              type="text" 
+              placeholder="ID utilizator sau email..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full p-4 border-2 border-slate-200 rounded-2xl font-bold focus:border-slate-800 outline-none shadow-sm"
+            />
+          </div>
+          <div className="flex items-end">
+            <div className="bg-slate-100 px-6 py-4 rounded-2xl font-black text-slate-600">
+              {users.length} Utilizatori
+            </div>
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center p-20">
+            <Loader2 className="animate-spin text-slate-800" size={48} />
+          </div>
+        ) : (
+          <div className="overflow-x-auto rounded-3xl border-2 border-slate-100">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50 text-slate-500 text-xs font-black uppercase tracking-widest">
+                  <th className="p-4 border-b">User ID / Email</th>
+                  <th className="p-4 border-b">Steluțe</th>
+                  <th className="p-4 border-b">Acțiuni Rapide</th>
+                </tr>
+              </thead>
+              <tbody className="font-bold text-slate-800">
+                {filteredUsers.length === 0 ? (
+                  <tr>
+                    <td colSpan="3" className="p-10 text-center text-slate-400 italic">Nu am găsit utilizatori.</td>
+                  </tr>
+                ) : (
+                  filteredUsers.map((u) => (
+                    <tr key={u.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="p-4 border-b text-xs font-mono">{u.id}</td>
+                      <td className="p-4 border-b text-amber-600">{u.points || 0} ⭐</td>
+                      <td className="p-4 border-b">
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => handleUpdatePoints(u.id, u.points || 0, 500)}
+                            className="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-xl text-xs hover:bg-emerald-200 transition-colors"
+                          >
+                            +500 ⭐
+                          </button>
+                          <button 
+                            onClick={() => handleUpdatePoints(u.id, u.points || 0, -500)}
+                            className="bg-rose-100 text-rose-700 px-4 py-2 rounded-xl text-xs hover:bg-rose-200 transition-colors"
+                          >
+                            -500 ⭐
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
