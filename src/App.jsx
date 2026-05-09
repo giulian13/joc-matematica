@@ -635,7 +635,15 @@ export default function App() {
             setPoints(data.points ?? 0);
             setHistory(data.history ?? []);
             setInventory(data.inventory ?? []);
-            setShopItems(data.shopItems ?? INITIAL_SHOP_ITEMS);
+            const firebaseShop = data.shopItems ?? INITIAL_SHOP_ITEMS;
+            // Ne asigurăm că itemele noi din cod apar și la utilizatorii vechi
+            const finalShop = [...firebaseShop];
+            INITIAL_SHOP_ITEMS.forEach(item => {
+              if (!finalShop.some(i => i.id === item.id)) {
+                finalShop.push(item);
+              }
+            });
+            setShopItems(finalShop);
             setHomework(data.homework ?? []);
             setMaxLevel(data.maxLevel ?? 1);
             setLevelProgress(data.levelProgress ?? 0);
@@ -2038,6 +2046,22 @@ function ParentDashboard({
 
         {activeTab === "inventory_manage" && (
           <div className="space-y-6 animate-fade-in text-left">
+            <div className="bg-indigo-50 border-4 border-indigo-100 p-8 rounded-[3rem]">
+              <h3 className="text-2xl font-black text-indigo-900 mb-4 flex items-center gap-2">
+                <span>🐾</span> Nume Animal Virtual
+              </h3>
+              <div className="flex gap-3">
+                <input 
+                  type="text" 
+                  value={petState.name} 
+                  onChange={(e) => setPetState(prev => ({ ...prev, name: e.target.value }))}
+                  className="flex-1 p-4 border-2 border-indigo-200 rounded-2xl font-bold focus:border-indigo-500 outline-none shadow-sm"
+                  placeholder="Introdu nume nou..."
+                />
+              </div>
+              <p className="text-indigo-400 text-xs mt-3 font-bold uppercase tracking-widest ml-2">Acest nume va apărea în tot jocul copilului</p>
+            </div>
+
             <div className="bg-emerald-50 border-4 border-emerald-100 p-8 rounded-[3rem]">
               <h3 className="text-2xl font-black text-emerald-900 mb-2">Recompensele Copilului</h3>
               <p className="text-emerald-700 font-medium mb-8 italic">Aici poți vedea ce a cumpărat copilul. După ce îi oferi premiul în realitate, apasă butonul de mai jos.</p>
