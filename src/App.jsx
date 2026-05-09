@@ -19,7 +19,23 @@ import {
   FileText,
   Map as MapIcon,
   Unlock,
+  BarChart3,
+  PieChart as PieChartIcon,
+  Clock,
+  Delete,
 } from "lucide-react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+} from "recharts";
 import confetti from "canvas-confetti";
 
 // ==========================================
@@ -507,6 +523,10 @@ export default function App() {
   const [petState, setPetState] = useState({ food: 100, joy: 100, energy: 100, lastInteraction: Date.now() });
   const [parentPin, setParentPin] = useState(null);
   const [resetPinRequested, setResetPinRequested] = useState(false);
+  const [analytics, setAnalytics] = useState({
+    dailyTime: {},
+    errorsByType: { adunare: 0, scadere: 0, inmultire: 0, impartire: 0 }
+  });
 
   // Stări pentru Firebase
   const [user, setUser] = useState(null);
@@ -578,6 +598,10 @@ export default function App() {
             setLevelProgress(data.levelProgress ?? 0);
             setParentPin(data.parentPin ?? null);
             setResetPinRequested(data.resetPinRequested ?? false);
+            setAnalytics(data.analytics ?? {
+              dailyTime: {},
+              errorsByType: { adunare: 0, scadere: 0, inmultire: 0, impartire: 0 }
+            });
 
             if (data.resetPinRequested) {
               setParentPin(null);
@@ -644,13 +668,41 @@ export default function App() {
       );
       setDoc(
         docRef,
-        { points, history, inventory, shopItems, homework, maxLevel, levelProgress, petState, parentPin, resetPinRequested },
+        { points, history, inventory, shopItems, homework, maxLevel, levelProgress, petState, parentPin, resetPinRequested, analytics },
         { merge: true },
       ).catch((err) => console.error("Eroare Firebase la salvare:", err));
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [points, history, inventory, shopItems, homework, maxLevel, levelProgress, petState, user, parentPin, resetPinRequested]);
+  }, [points, history, inventory, shopItems, homework, maxLevel, levelProgress, petState, user, parentPin, resetPinRequested, analytics]);
+
+  // Tracking Timp Zilnic
+  useEffect(() => {
+    if (!user || !isDataLoaded.current) return;
+
+    const interval = setInterval(() => {
+      const today = new Date().toISOString().split('T')[0];
+      setAnalytics(prev => ({
+        ...prev,
+        dailyTime: {
+          ...prev.dailyTime,
+          [today]: (prev.dailyTime[today] || 0) + 1
+        }
+      }));
+    }, 60000); // Actualizăm la fiecare minut
+
+    return () => clearInterval(interval);
+  }, [user]);
+
+  const logError = (type) => {
+    setAnalytics(prev => ({
+      ...prev,
+      errorsByType: {
+        ...prev.errorsByType,
+        [type]: (prev.errorsByType[type] || 0) + 1
+      }
+    }));
+  };
 
   const addHistory = (message, amount, type = "earn") => {
     const timestamp = new Date().toLocaleTimeString("ro-RO", {
@@ -777,6 +829,7 @@ export default function App() {
             levelProgress={levelProgress}
             setLevelProgress={setLevelProgress}
             setView={setView}
+            logError={logError}
           />
         )}
         {view === "pet" && (
@@ -815,6 +868,7 @@ export default function App() {
             addHistory={addHistory}
             homework={homework}
             setHomework={setHomework}
+            analytics={analytics}
           />
         )}
         {view === "pin_entry" && (
@@ -1140,7 +1194,7 @@ function MapScreen({ setView, maxLevel, setCurrentPlayingLevel }) {
 // ==========================================
 // ECRANUL DE JOC (LOGICA MATEMATICĂ)
 // ==========================================
-function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setMaxLevel, levelProgress, setLevelProgress, setView }) {
+function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setMaxLevel, levelProgress, setLevelProgress, setView, logError }) {
   const [problem, setProblem] = useState(null);
   const [answer, setAnswer] = useState("");
   const [feedback, setFeedback] = useState(null);
@@ -1151,9 +1205,11 @@ function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setM
     let text = "";
     let correctAnswer = 0;
     let reward = 10;
+    let opType = "adunare";
 
     switch (type) {
       case 0:
+        opType = "adunare";
         const a1 = Math.floor(Math.random() * 900) + 50;
         const b1 = Math.floor(Math.random() * 900) + 50;
         text = `${a1} + ${b1}`;
@@ -1161,6 +1217,7 @@ function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setM
         reward = 10;
         break;
       case 1:
+        opType = "scadere";
         const a2 = Math.floor(Math.random() * 850) + 100;
         const b2 = Math.floor(Math.random() * (a2 - 20)) + 20;
         text = `${a2} - ${b2}`;
@@ -1168,6 +1225,7 @@ function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setM
         reward = 10;
         break;
       case 2:
+        opType = "inmultire";
         const a3 = Math.floor(Math.random() * 11);
         const b3 = Math.floor(Math.random() * 11);
         text = `${a3} x ${b3}`;
@@ -1175,6 +1233,7 @@ function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setM
         reward = 10;
         break;
       case 3:
+        opType = "impartire";
         const divisor = Math.floor(Math.random() * 10) + 1;
         const quotient = Math.floor(Math.random() * 11);
         const dividend = divisor * quotient;
@@ -1183,6 +1242,7 @@ function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setM
         reward = 10;
         break;
       case 4:
+        opType = "inmultire"; // dominant in expressions here
         const a4 = Math.floor(Math.random() * 10) + 1;
         const b4 = Math.floor(Math.random() * 6);
         const c4 = Math.floor(Math.random() * 6);
@@ -1198,7 +1258,9 @@ function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setM
         reward = 15;
         break;
       case 5:
+        opType = "impartire";
         const subType = Math.floor(Math.random() * 3);
+        const div1 = Math.floor(Math.random() * 10) + 1;
         if (subType === 0) {
           const a5 = Math.floor(Math.random() * 5) + 1;
           const b5 = Math.floor(Math.random() * 5) + 1;
@@ -1224,7 +1286,7 @@ function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setM
         break;
     }
 
-    setProblem({ text, answer: correctAnswer, reward });
+    setProblem({ text, answer: correctAnswer, reward, opType });
     setAnswer("");
     setFeedback(null);
     if (inputRef.current) inputRef.current.focus();
@@ -1288,6 +1350,7 @@ function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setM
       }, 2500);
     } else {
       setFeedback({ type: "error", message: `Greșit. Mai încearcă!` });
+      logError(problem.opType);
       addHistory(`Ai ratat provocarea: ${problem.text}`, 0, "fail");
       setAnswer("");
       if (inputRef.current) inputRef.current.focus();
@@ -1554,32 +1617,18 @@ function ParentDashboard({
   addHistory,
   homework,
   setHomework,
+  analytics,
 }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [pin, setPin] = useState("");
-  const [activeTab, setActiveTab] = useState("homework_manage");
-
+  const [activeTab, setActiveTab] = useState("stats");
   const [newItemName, setNewItemName] = useState("");
   const [newItemCost, setNewItemCost] = useState("");
   const [newItemIcon, setNewItemIcon] = useState("🎁");
   const [newItemDesc, setNewItemDesc] = useState("");
-
   const [bonusPoints, setBonusPoints] = useState("");
-
   const [newHwQuestion, setNewHwQuestion] = useState("");
   const [newHwReward, setNewHwReward] = useState("");
   const [gradePoints, setGradePoints] = useState({});
   const [parentComments, setParentComments] = useState({});
-
-  const handleLogin = (e) => {
-    e.preventDefault();
-    if (pin === "1392") {
-      setIsAuthenticated(true);
-    } else {
-      alert("PIN incorect!");
-      setPin("");
-    }
-  };
 
   const handleDeleteItem = (id) => {
     setShopItems((prev) => prev.filter((item) => item.id !== id));
@@ -1588,7 +1637,6 @@ function ParentDashboard({
   const handleAddItem = (e) => {
     e.preventDefault();
     if (!newItemName || !newItemCost || !newItemIcon) return;
-
     const newItem = {
       id: Date.now(),
       name: newItemName,
@@ -1596,7 +1644,6 @@ function ParentDashboard({
       icon: newItemIcon,
       description: newItemDesc || "Un premiu surpriză!",
     };
-
     setShopItems((prev) => [...prev, newItem]);
     setNewItemName("");
     setNewItemCost("");
@@ -1614,19 +1661,14 @@ function ParentDashboard({
     if (!bonusPoints) return;
     const amount = parseInt(bonusPoints, 10);
     setPoints((prev) => prev + amount);
-    addHistory(
-      `Bonus acordat de părinte`,
-      amount,
-      amount >= 0 ? "earn" : "spend",
-    );
+    addHistory(`Bonus acordat de părinte`, amount, amount >= 0 ? "earn" : "spend");
     setBonusPoints("");
-    alert(`Acțiune realizată! Punctele au fost actualizate.`);
+    alert(`Punctele au fost actualizate.`);
   };
 
   const handleAddHomework = (e) => {
     e.preventDefault();
     if (!newHwQuestion || !newHwReward) return;
-
     const newHw = {
       id: Date.now(),
       question: newHwQuestion,
@@ -1634,19 +1676,14 @@ function ParentDashboard({
       status: "new",
       childAnswer: "",
     };
-
     setHomework((prev) => [...prev, newHw]);
     setNewHwQuestion("");
     setNewHwReward("");
   };
 
   const handleGradeHomework = (id, maxReward) => {
-    const awarded =
-      gradePoints[id] !== undefined ? parseInt(gradePoints[id], 10) : maxReward;
-
-    setHomework((prev) =>
-      prev.map((hw) => (hw.id === id ? { ...hw, status: "graded" } : hw)),
-    );
+    const awarded = gradePoints[id] !== undefined ? parseInt(gradePoints[id], 10) : maxReward;
+    setHomework((prev) => prev.map((hw) => (hw.id === id ? { ...hw, status: "graded" } : hw)));
     if (awarded > 0) {
       setPoints((prev) => prev + awarded);
       addHistory(`Temă corectată`, awarded, "earn");
@@ -1655,23 +1692,12 @@ function ParentDashboard({
 
   const handleReturnHomework = (id) => {
     const comment = parentComments[id];
-    if (!comment || comment.trim() === "") {
-      alert(
-        "Te rog să adaugi un comentariu explicativ pentru ca cel mic să știe ce a greșit.",
-      );
-      return;
-    }
-    setHomework((prev) =>
-      prev.map((hw) =>
-        hw.id === id
-          ? { ...hw, status: "returned", parentComment: comment }
-          : hw,
-      ),
-    );
+    if (!comment) return alert("Adaugă un comentariu pentru refacere!");
+    setHomework((prev) => prev.map((hw) => hw.id === id ? { ...hw, status: "returned", parentComment: comment } : hw));
     setParentComments((prev) => {
-      const newComments = { ...prev };
-      delete newComments[id];
-      return newComments;
+      const nc = { ...prev };
+      delete nc[id];
+      return nc;
     });
   };
 
@@ -1679,428 +1705,174 @@ function ParentDashboard({
     setHomework((prev) => prev.filter((hw) => hw.id !== id));
   };
 
-  if (!isAuthenticated) {
-    return (
-      <div className="max-w-sm mx-auto mt-20 bg-white p-8 rounded-3xl shadow-xl border-2 border-slate-100 animate-fade-in relative z-10">
-        <div className="flex justify-center mb-6">
-          <div className="bg-slate-100 p-4 rounded-full">
-            <Lock className="text-slate-600" size={40} />
-          </div>
-        </div>
-        <h2 className="text-2xl font-bold text-center text-slate-700 mb-2">
-          Acces Părinți
-        </h2>
-        <p className="text-center text-slate-500 mb-6 text-sm">
-          Introduceți codul PIN pentru a gestiona magazinul. <br />
-          (Hint: 1234)
-        </p>
+  const last7Days = [...Array(7)].map((_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    return d.toISOString().split('T')[0];
+  });
 
-        <form onSubmit={handleLogin} className="space-y-4">
-          <input
-            type="password"
-            value={pin}
-            onChange={(e) => setPin(e.target.value)}
-            className="w-full text-center text-2xl font-bold p-3 border-2 border-slate-200 rounded-xl focus:border-blue-400 focus:outline-none"
-            placeholder="****"
-            maxLength={4}
-            autoFocus
-          />
-          <button
-            type="submit"
-            className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-xl transition-all"
-          >
-            Deblochează
-          </button>
-        </form>
-      </div>
-    );
-  }
+  const timeData = last7Days.map(date => ({
+    name: date.split('-').slice(1).join('/'),
+    minute: analytics.dailyTime[date] || 0
+  }));
+
+  const errorData = Object.entries(analytics.errorsByType)
+    .filter(([_, count]) => count > 0)
+    .map(([name, value]) => ({ 
+      name: name.charAt(0).toUpperCase() + name.slice(1), 
+      value 
+    }));
+
+  const COLORS = ["#6366f1", "#f59e0b", "#ec4899", "#10b981"];
 
   return (
-    <div className="bg-white rounded-3xl shadow-xl border-2 border-slate-100 overflow-hidden mt-6 animate-fade-in relative z-10">
-      <div className="bg-slate-800 p-4 sm:px-8 text-white flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <Settings size={24} />
-          <h2 className="text-xl font-bold">Panou de Control Părinți</h2>
+    <div className="bg-white/95 backdrop-blur-md rounded-[3rem] shadow-2xl overflow-hidden border-4 border-white animate-fade-in relative z-10">
+      <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 p-8 text-center relative">
+        <div className="relative z-10 flex justify-between items-center text-white">
+          <div className="text-left">
+            <h2 className="text-white/80 text-xs font-black uppercase tracking-widest mb-1">Control Părinte</h2>
+            <div className="text-white font-black text-3xl">Dashboard</div>
+          </div>
+          <Settings size={32} className="animate-spin-slow opacity-50" />
         </div>
-        <button
-          onClick={() => {
-            signOut(auth);
-          }}
-          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm font-bold transition-colors flex items-center gap-1"
-          title="Deconectare din cont"
-        >
-          Ieșire Cont
-        </button>
       </div>
 
-      <div className="flex border-b-2 border-slate-100 flex-wrap">
-        <button
-          onClick={() => setActiveTab("homework_manage")}
-          className={`flex-1 py-4 text-sm sm:text-base font-bold transition-colors ${activeTab === "homework_manage" ? "bg-slate-50 text-slate-800 border-b-4 border-slate-800" : "text-slate-500 hover:bg-slate-50"}`}
-        >
-          Teme Zilnice
-        </button>
-        <button
-          onClick={() => setActiveTab("shop_manage")}
-          className={`flex-1 py-4 text-sm sm:text-base font-bold transition-colors ${activeTab === "shop_manage" ? "bg-slate-50 text-slate-800 border-b-4 border-slate-800" : "text-slate-500 hover:bg-slate-50"}`}
-        >
-          Editează Magazin
-        </button>
-        <button
-          onClick={() => setActiveTab("inventory_manage")}
-          className={`flex-1 py-4 text-sm sm:text-base font-bold transition-colors ${activeTab === "inventory_manage" ? "bg-slate-50 text-slate-800 border-b-4 border-slate-800" : "text-slate-500 hover:bg-slate-50"}`}
-        >
-          Inventar Copil
-        </button>
-        <button
-          onClick={() => setActiveTab("points_manage")}
-          className={`flex-1 py-4 text-sm sm:text-base font-bold transition-colors ${activeTab === "points_manage" ? "bg-slate-50 text-slate-800 border-b-4 border-slate-800" : "text-slate-500 hover:bg-slate-50"}`}
-        >
-          Modifică Puncte
-        </button>
+      <div className="flex overflow-x-auto bg-slate-50 border-b-2 border-slate-200 no-scrollbar">
+        {[
+          { id: "stats", label: "Statistici", icon: BarChart3 },
+          { id: "homework_manage", label: "Teme", icon: BookOpen },
+          { id: "shop_manage", label: "Magazin", icon: ShoppingCart },
+          { id: "inventory_manage", label: "Inventar", icon: Award },
+          { id: "points_manage", label: "Puncte", icon: Star },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center gap-2 px-6 py-4 font-black whitespace-nowrap transition-all ${
+              activeTab === tab.id ? "bg-white text-indigo-600 shadow-[0_-4px_0_0_#4f46e5_inset]" : "text-slate-500 hover:bg-slate-100"
+            }`}
+          >
+            <tab.icon size={18} /> {tab.label}
+          </button>
+        ))}
       </div>
 
-      <div className="p-6 sm:p-8 min-h-[400px]">
+      <div className="p-6 sm:p-8 min-h-[500px]">
+        {activeTab === "stats" && (
+          <div className="space-y-8 animate-fade-in">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="bg-indigo-50 border-2 border-indigo-100 rounded-[2rem] p-6">
+                <h3 className="text-lg font-black text-indigo-900 mb-4 flex items-center gap-2 text-left">
+                  <Clock size={20} /> Timp petrecut (min)
+                </h3>
+                <div className="h-[250px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={timeData}>
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#4f46e5', fontWeight: 'bold', fontSize: 10}} />
+                      <YAxis hide />
+                      <RechartsTooltip />
+                      <Bar dataKey="minute" fill="#6366f1" radius={[8, 8, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              <div className="bg-rose-50 border-2 border-rose-100 rounded-[2rem] p-6 text-left">
+                <h3 className="text-lg font-black text-rose-900 mb-4 flex items-center gap-2">
+                  <AlertCircle size={20} /> Greșeli frecvente
+                </h3>
+                {errorData.length > 0 ? (
+                  <div className="h-[250px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie data={errorData} innerRadius={50} outerRadius={70} dataKey="value">
+                          {errorData.map((_, index) => <Cell key={index} fill={COLORS[index % COLORS.length]} />)}
+                        </Pie>
+                        <RechartsTooltip />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="h-[250px] flex flex-col items-center justify-center text-rose-300">
+                    <Star size={48} className="mb-2 opacity-50" />
+                    <p className="font-bold">Nicio greșeală încă!</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {activeTab === "homework_manage" && (
-          <div className="space-y-8">
-            <div className="bg-orange-50 p-6 rounded-2xl border border-orange-200">
-              <h3 className="font-bold text-lg mb-4 flex items-center gap-2 text-orange-800">
-                <FileText size={20} /> Adaugă o temă / problemă nouă
+          <div className="space-y-8 animate-fade-in">
+            <div className="bg-indigo-50 p-8 rounded-[2.5rem] border-4 border-indigo-100">
+              <h3 className="font-black text-xl mb-4 flex items-center gap-2 text-indigo-900 text-left">
+                <FileText size={24} className="text-indigo-600" /> Adaugă o temă nouă
               </h3>
-              <form
-                onSubmit={handleAddHomework}
-                className="grid grid-cols-1 sm:grid-cols-4 gap-4"
-              >
-                <div className="sm:col-span-3">
-                  <label className="block text-sm font-bold text-orange-700 mb-1">
-                    Cerința exercițiului
-                  </label>
-                  <input
-                    required
-                    value={newHwQuestion}
-                    onChange={(e) => setNewHwQuestion(e.target.value)}
-                    type="text"
-                    className="w-full p-3 border border-orange-300 rounded-xl"
-                    placeholder="ex: Cât fac 5 mere + 2 mere? Scrie și explicația."
-                  />
+              <form onSubmit={handleAddHomework} className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                <div className="sm:col-span-2 text-left">
+                  <label className="block text-xs font-black text-indigo-400 uppercase tracking-widest ml-2 mb-1">Cerință</label>
+                  <input type="text" required value={newHwQuestion} onChange={(e) => setNewHwQuestion(e.target.value)} className="w-full p-4 border-2 border-indigo-200 rounded-2xl font-bold focus:border-indigo-500 outline-none" placeholder="Ex: Rezolvă pag. 42..." />
                 </div>
-                <div className="sm:col-span-1">
-                  <label className="block text-sm font-bold text-orange-700 mb-1">
-                    Puncte Max
-                  </label>
-                  <input
-                    required
-                    value={newHwReward}
-                    onChange={(e) => setNewHwReward(e.target.value)}
-                    type="number"
-                    className="w-full p-3 border border-orange-300 rounded-xl"
-                    placeholder="ex: 50"
-                  />
+                <div className="text-left">
+                  <label className="block text-xs font-black text-indigo-400 uppercase tracking-widest ml-2 mb-1">Steluțe</label>
+                  <input type="number" required value={newHwReward} onChange={(e) => setNewHwReward(e.target.value)} className="w-full p-4 border-2 border-indigo-200 rounded-2xl font-bold focus:border-indigo-500 outline-none" placeholder="Ex: 50" />
                 </div>
-                <div className="sm:col-span-4">
-                  <button
-                    type="submit"
-                    className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-xl transition-colors shadow-sm"
-                  >
-                    Trimite Tema către Copil
-                  </button>
+                <div className="text-left">
+                  <label className="block text-xs font-black text-indigo-400 uppercase tracking-widest ml-2 mb-1">&nbsp;</label>
+                  <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-2xl shadow-[0_6px_0_0_#312e81] active:translate-y-1 active:shadow-none transition-all">Trimite</button>
                 </div>
               </form>
             </div>
 
-            <div>
-              <h3 className="font-bold text-lg mb-4 text-slate-800">
-                Teme de Corectat
-              </h3>
-              <div className="space-y-4">
-                {homework.filter((hw) => hw.status === "answered").length ===
-                  0 && (
-                  <p className="text-slate-500 italic">
-                    Nu ai nicio temă de corectat momentan.
-                  </p>
-                )}
-                {homework
-                  .filter((hw) => hw.status === "answered")
-                  .map((hw) => (
-                    <div
-                      key={hw.id}
-                      className="bg-white border-2 border-blue-200 p-5 rounded-xl shadow-sm"
-                    >
-                      <p className="text-sm text-slate-500 font-bold mb-1">
-                        Cerință:
-                      </p>
-                      <p className="font-black text-slate-800 mb-4">
-                        {hw.question}
-                      </p>
-
-                      <div className="bg-slate-50 p-4 rounded-lg mb-4 border border-slate-200">
-                        <p className="text-sm text-slate-500 font-bold mb-1">
-                          Răspunsul copilului:
-                        </p>
-                        <p className="font-bold text-blue-700">
-                          {hw.childAnswer}
-                        </p>
-                      </div>
-
-                      <div className="flex flex-col gap-4">
-                        <div className="flex items-end gap-3 flex-wrap">
-                          <div className="flex-1 min-w-[200px]">
-                            <label className="block text-xs font-bold text-slate-500 mb-1">
-                              Comentariu pentru refacere (Obligatoriu la
-                              returnare)
-                            </label>
-                            <input
-                              type="text"
-                              value={parentComments[hw.id] || ""}
-                              onChange={(e) =>
-                                setParentComments((prev) => ({
-                                  ...prev,
-                                  [hw.id]: e.target.value,
-                                }))
-                              }
-                              placeholder="ex: Mai verifică o dată calculul..."
-                              className="w-full p-2 border-2 border-slate-200 rounded-lg text-sm"
-                            />
-                          </div>
+            <div className="space-y-6">
+              <h3 className="font-black text-xl text-slate-800 text-left">Teme Active și de Corectat</h3>
+              {homework.filter(h => h.status !== 'graded').length === 0 ? (
+                <p className="text-slate-400 font-bold py-12 bg-slate-50 rounded-3xl border-4 border-dashed border-slate-200">Nu există teme în curs.</p>
+              ) : (
+                homework.filter(h => h.status !== 'graded').map((hw) => (
+                  <div key={hw.id} className="bg-white border-4 border-slate-50 p-6 rounded-[2.5rem] shadow-sm hover:border-indigo-100 transition-colors text-left">
+                    <div className="flex flex-col sm:flex-row justify-between gap-6">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                           <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${
+                             hw.status === 'new' ? 'bg-blue-100 text-blue-600' :
+                             hw.status === 'answered' ? 'bg-amber-100 text-amber-600' :
+                             'bg-rose-100 text-rose-600'
+                           }`}>
+                             {hw.status === 'new' ? 'Trimisă' : hw.status === 'answered' ? 'De Corectat' : 'Returnată'}
+                           </span>
+                           <span className="text-amber-600 font-black text-sm">{hw.reward} ⭐</span>
                         </div>
-
-                        <div className="flex items-end gap-3 flex-wrap bg-slate-50 p-3 rounded-lg border border-slate-200">
-                          <div>
-                            <label className="block text-xs font-bold text-slate-500 mb-1">
-                              Acordă Puncte (Max {hw.reward})
-                            </label>
-                            <input
-                              type="number"
-                              value={
-                                gradePoints[hw.id] !== undefined
-                                  ? gradePoints[hw.id]
-                                  : hw.reward
-                              }
-                              onChange={(e) =>
-                                setGradePoints((prev) => ({
-                                  ...prev,
-                                  [hw.id]: e.target.value,
-                                }))
-                              }
-                              className="w-24 p-2 border-2 border-blue-300 rounded-lg text-center font-bold"
-                            />
+                        <h4 className="text-lg font-black text-slate-800">{hw.question}</h4>
+                        
+                        {hw.status === "answered" && (
+                          <div className="mt-4 p-5 bg-indigo-50/50 rounded-2xl border-2 border-indigo-100">
+                             <p className="text-xs font-black text-indigo-400 uppercase tracking-widest mb-2">Răspuns Copil:</p>
+                             <p className="font-black text-indigo-900 italic">"{hw.childAnswer}"</p>
                           </div>
-                          <button
-                            onClick={() =>
-                              handleGradeHomework(hw.id, hw.reward)
-                            }
-                            className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-lg transition-colors flex items-center gap-2"
-                          >
-                            <CheckCircle2 size={18} /> Gata, Acordă!
-                          </button>
-
-                          <button
-                            onClick={() => handleReturnHomework(hw.id)}
-                            className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center gap-2 ml-auto"
-                          >
-                            <X size={18} /> Întoarce pentru refacere
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            </div>
-
-            <div>
-              <h3 className="font-bold text-lg mb-4 text-slate-800">
-                Teme în Așteptare (Nerezolvate sau întoarse la copil)
-              </h3>
-              <div className="space-y-2">
-                {homework.filter(
-                  (hw) => hw.status === "new" || hw.status === "returned",
-                ).length === 0 && (
-                  <p className="text-slate-500 italic">
-                    Nicio temă în așteptare.
-                  </p>
-                )}
-                {homework
-                  .filter(
-                    (hw) => hw.status === "new" || hw.status === "returned",
-                  )
-                  .map((hw) => (
-                    <div
-                      key={hw.id}
-                      className="flex justify-between items-center bg-slate-50 border border-slate-200 p-3 rounded-lg"
-                    >
-                      <div className="flex flex-col">
-                        <span className="font-bold text-slate-700">
-                          {hw.question}{" "}
-                          <span className="text-orange-500 text-sm">
-                            (Max {hw.reward}⭐)
-                          </span>
-                        </span>
-                        {hw.status === "returned" && (
-                          <span className="text-xs text-red-500 font-bold mt-1">
-                            Status: Întoarsă pentru refacere
-                          </span>
                         )}
                       </div>
-                      <button
-                        onClick={() => handleDeleteHomework(hw.id)}
-                        className="text-red-500 hover:bg-red-100 p-2 rounded-lg transition-colors"
-                        title="Șterge tema"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "shop_manage" && (
-          <div className="space-y-8">
-            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
-              <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                <Plus size={20} className="text-blue-500" /> Adaugă Premiu Nou
-              </h3>
-              <form
-                onSubmit={handleAddItem}
-                className="grid grid-cols-1 sm:grid-cols-2 gap-4"
-              >
-                <div>
-                  <label className="block text-sm font-bold text-slate-600 mb-1">
-                    Nume Premiu
-                  </label>
-                  <input
-                    required
-                    value={newItemName}
-                    onChange={(e) => setNewItemName(e.target.value)}
-                    type="text"
-                    className="w-full p-2 border border-slate-300 rounded-lg"
-                    placeholder="ex: O înghețată"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-slate-600 mb-1">
-                    Cost (Puncte ⭐)
-                  </label>
-                  <input
-                    required
-                    value={newItemCost}
-                    onChange={(e) => setNewItemCost(e.target.value)}
-                    type="number"
-                    className="w-full p-2 border border-slate-300 rounded-lg"
-                    placeholder="ex: 200"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-slate-600 mb-1">
-                    Emoji / Iconiță
-                  </label>
-                  <input
-                    required
-                    value={newItemIcon}
-                    onChange={(e) => setNewItemIcon(e.target.value)}
-                    type="text"
-                    className="w-full p-2 border border-slate-300 rounded-lg"
-                    placeholder="ex: 🍦"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-slate-600 mb-1">
-                    Descriere scurtă
-                  </label>
-                  <input
-                    value={newItemDesc}
-                    onChange={(e) => setNewItemDesc(e.target.value)}
-                    type="text"
-                    className="w-full p-2 border border-slate-300 rounded-lg"
-                    placeholder="ex: Mergem azi la gelaterie."
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <button
-                    type="submit"
-                    className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg transition-colors"
-                  >
-                    Adaugă în Magazin
-                  </button>
-                </div>
-              </form>
-            </div>
-
-            <div>
-              <h3 className="font-bold text-lg mb-4">
-                Premii Active în Magazin
-              </h3>
-              <div className="space-y-3">
-                {shopItems.length === 0 && (
-                  <p className="text-slate-500 italic">Magazinul este gol.</p>
-                )}
-                {shopItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between bg-white border border-slate-200 p-4 rounded-xl shadow-sm"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="text-3xl bg-slate-100 p-2 rounded-lg">
-                        {item.icon}
-                      </div>
-                      <div>
-                        <p className="font-bold text-slate-800">{item.name}</p>
-                        <p className="text-sm text-yellow-600 font-bold flex items-center gap-1">
-                          <Star size={12} className="fill-yellow-500" />{" "}
-                          {item.cost} puncte
-                        </p>
+                      
+                      <div className="sm:w-64 space-y-3">
+                        {hw.status === "answered" && (
+                          <>
+                            <div className="text-left">
+                              <label className="block text-[10px] font-black text-slate-400 uppercase mb-1 ml-1">Scor Final</label>
+                              <input type="number" placeholder="Ex: 50" className="w-full p-2.5 border-2 border-slate-200 rounded-xl font-bold text-sm" onChange={(e) => setGradePoints({...gradePoints, [hw.id]: e.target.value})} />
+                            </div>
+                            <button onClick={() => handleGradeHomework(hw.id, hw.reward)} className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-2.5 rounded-xl shadow-[0_4px_0_0_#065f46] text-xs">Corect & Acordă</button>
+                            <div className="text-left">
+                              <label className="block text-[10px] font-black text-slate-400 uppercase mb-1 ml-1">Sfat Refacere</label>
+                              <input type="text" placeholder="Mai încearcă..." className="w-full p-2.5 border-2 border-slate-200 rounded-xl text-xs" onChange={(e) => setParentComments({...parentComments, [hw.id]: e.target.value})} />
+                            </div>
+                            <button onClick={() => handleReturnHomework(hw.id)} className="w-full bg-rose-500 hover:bg-rose-600 text-white font-black py-2.5 rounded-xl shadow-[0_4px_0_0_#9f1239] text-xs">Returnează</button>
+                          </>
+                        )}
+                        <button onClick={() => handleDeleteHomework(hw.id)} className="w-full text-slate-300 hover:text-rose-500 font-bold text-[10px] uppercase tracking-widest pt-2">Elimină Tema</button>
                       </div>
                     </div>
-                    <button
-                      onClick={() => handleDeleteItem(item.id)}
-                      className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Șterge premiu"
-                    >
-                      <Trash2 size={20} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "inventory_manage" && (
-          <div>
-            <h3 className="font-bold text-lg mb-4">
-              Premiile deținute de copil
-            </h3>
-            <p className="text-slate-500 mb-6 text-sm">
-              Aici poți vedea ce a cumpărat copilul din magazin. Când îi oferi
-              recompensa în realitate, poți apăsa butonul "Folosit" pentru a
-              face curățenie în inventarul lui.
-            </p>
-
-            <div className="space-y-3">
-              {inventory.length === 0 ? (
-                <div className="text-center text-slate-500 py-8 bg-slate-50 rounded-xl">
-                  Copilul nu are niciun premiu în inventar momentan.
-                </div>
-              ) : (
-                inventory.map((item, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between bg-white border border-slate-200 p-4 rounded-xl shadow-sm"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="text-3xl">{item.icon}</div>
-                      <div>
-                        <p className="font-bold text-slate-800">{item.name}</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => handleUseInventoryItem(index, item.name)}
-                      className="flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 hover:bg-green-200 font-bold rounded-lg transition-colors"
-                    >
-                      <CheckCircle2 size={18} /> Marchează Folosit
-                    </button>
                   </div>
                 ))
               )}
@@ -2108,44 +1880,93 @@ function ParentDashboard({
           </div>
         )}
 
-        {activeTab === "points_manage" && (
-          <div className="max-w-md">
-            <h3 className="font-bold text-lg mb-2">Acordă sau Scade Puncte</h3>
-            <p className="text-slate-500 mb-6 text-sm">
-              Vrei să-l premiezi pentru că a făcut curat în cameră? Adaugă
-              puncte direct aici. Folosește semnul minus (-) pentru a scădea.
-            </p>
-
-            <div className="bg-yellow-50 border-2 border-yellow-200 p-6 rounded-2xl">
-              <div className="flex items-center gap-4 mb-6">
-                <span className="text-lg font-bold text-slate-700">
-                  Puncte Curente:
-                </span>
-                <span className="text-2xl font-black text-yellow-600 flex items-center gap-1">
-                  {points} <Star className="fill-yellow-500" size={24} />
-                </span>
-              </div>
-
-              <form onSubmit={handleAddBonus} className="flex items-end gap-2">
-                <div className="flex-1">
-                  <label className="block text-sm font-bold text-slate-600 mb-1">
-                    Sumă (ex: 50 sau -20)
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    value={bonusPoints}
-                    onChange={(e) => setBonusPoints(e.target.value)}
-                    className="w-full p-3 border-2 border-yellow-300 rounded-xl font-bold"
-                    placeholder="+ / -"
-                  />
+        {activeTab === "shop_manage" && (
+          <div className="space-y-6 animate-fade-in">
+            <div className="bg-purple-50 border-4 border-purple-100 p-6 rounded-[2.5rem]">
+              <h3 className="font-black text-xl mb-4 text-purple-900 text-left">Premiu Nou în Magazin</h3>
+              <form onSubmit={handleAddItem} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="text-left">
+                    <label className="block text-xs font-black text-purple-400 uppercase tracking-widest ml-2 mb-1">Nume Premiu</label>
+                    <input type="text" required value={newItemName} onChange={(e) => setNewItemName(e.target.value)} className="w-full p-4 border-2 border-purple-200 rounded-2xl font-bold focus:border-purple-500 outline-none" placeholder="Ex: 30 min jocuri..." />
+                  </div>
+                  <div className="text-left">
+                    <label className="block text-xs font-black text-purple-400 uppercase tracking-widest ml-2 mb-1">Cost Steluțe</label>
+                    <input type="number" required value={newItemCost} onChange={(e) => setNewItemCost(e.target.value)} className="w-full p-4 border-2 border-purple-200 rounded-2xl font-bold focus:border-purple-500 outline-none" placeholder="Ex: 100" />
+                  </div>
                 </div>
-                <button
-                  type="submit"
-                  className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-6 rounded-xl transition-colors"
-                >
-                  Aplică
-                </button>
+                <div className="flex gap-4">
+                  <div className="text-left">
+                    <label className="block text-xs font-black text-purple-400 uppercase tracking-widest ml-2 mb-1">Iconiță</label>
+                    <input type="text" required value={newItemIcon} onChange={(e) => setNewItemIcon(e.target.value)} className="w-20 p-4 border-2 border-purple-200 rounded-2xl text-center text-2xl" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <label className="block text-xs font-black text-purple-400 uppercase tracking-widest ml-2 mb-1">&nbsp;</label>
+                    <button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 text-white font-black py-4 rounded-2xl shadow-[0_6px_0_0_#581c87] active:translate-y-1 active:shadow-none transition-all">Adaugă Premiul</button>
+                  </div>
+                </div>
+              </form>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {shopItems.map(item => (
+                <div key={item.id} className="bg-white border-4 border-slate-50 p-4 rounded-3xl flex items-center justify-between shadow-sm hover:border-purple-100 transition-colors">
+                  <div className="flex items-center gap-4">
+                    <span className="text-4xl bg-slate-50 p-2 rounded-2xl">{item.icon}</span>
+                    <div className="text-left">
+                      <p className="font-black text-slate-800 leading-tight">{item.name}</p>
+                      <p className="text-amber-600 font-bold flex items-center gap-1 text-sm"><Star size={14} className="fill-amber-500" /> {item.cost} steluțe</p>
+                    </div>
+                  </div>
+                  <button onClick={() => handleDeleteItem(item.id)} className="text-rose-400 hover:bg-rose-50 p-3 rounded-xl transition-colors">
+                    <Trash2 size={22} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === "inventory_manage" && (
+          <div className="space-y-6 animate-fade-in text-left">
+            <div className="bg-emerald-50 border-4 border-emerald-100 p-8 rounded-[3rem]">
+              <h3 className="text-2xl font-black text-emerald-900 mb-2">Recompensele Copilului</h3>
+              <p className="text-emerald-700 font-medium mb-8 italic">Aici poți vedea ce a cumpărat copilul. După ce îi oferi premiul în realitate, apasă butonul de mai jos.</p>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {inventory.length === 0 ? (
+                  <p className="col-span-full py-12 text-center text-slate-400 font-bold bg-white/50 rounded-3xl border-4 border-dashed border-emerald-100">Nicio recompensă de revendicat momentan.</p>
+                ) : (
+                  inventory.map((item, idx) => (
+                    <div key={idx} className="bg-white p-5 rounded-[2.5rem] border-4 border-emerald-50 flex items-center justify-between shadow-sm">
+                      <div className="flex items-center gap-4">
+                        <span className="text-4xl">{item.icon}</span>
+                        <span className="font-black text-slate-800">{item.name}</span>
+                      </div>
+                      <button onClick={() => handleUseInventoryItem(idx, item.name)} className="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-2xl font-black shadow-[0_4px_0_0_#065f46] text-sm">Folosit</button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "points_manage" && (
+          <div className="max-w-md mx-auto space-y-8 animate-fade-in">
+            <div className="bg-amber-50 border-4 border-amber-100 p-10 rounded-[4rem] shadow-sm">
+              <h3 className="text-2xl font-black text-amber-900 mb-8">Gestionează Punctele</h3>
+              <div className="bg-white p-8 rounded-[2.5rem] shadow-inner border-2 border-amber-100 mb-8">
+                <Star size={48} className="text-amber-500 fill-amber-500 mx-auto mb-3 animate-pulse" />
+                <p className="text-5xl font-black text-slate-800">{points}</p>
+                <p className="text-slate-400 font-bold uppercase tracking-widest text-xs mt-1">Steluțe curente</p>
+              </div>
+              <form onSubmit={handleAddBonus} className="space-y-4">
+                <div className="text-left">
+                  <label className="block text-xs font-black text-amber-600 uppercase tracking-widest ml-4 mb-1">Adaugă sau Scade</label>
+                  <input type="number" required value={bonusPoints} onChange={(e) => setBonusPoints(e.target.value)} className="w-full p-5 border-4 border-amber-100 rounded-[2rem] text-center text-3xl font-black focus:border-amber-400 outline-none shadow-sm" placeholder="+ / - 50" />
+                </div>
+                <button type="submit" className="w-full bg-amber-500 hover:bg-amber-600 text-white font-black py-5 rounded-[2rem] shadow-[0_8px_0_0_#92400e] active:translate-y-1 active:shadow-none transition-all text-xl">Actualizează Portofelul</button>
               </form>
             </div>
           </div>
