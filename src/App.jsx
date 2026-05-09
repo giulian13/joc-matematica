@@ -92,6 +92,15 @@ try {
 const APP_ID =
   typeof __app_id !== "undefined" ? __app_id : "joc-matematica-123";
 
+// Funcție pentru hashing PIN (Securitate)
+const hashPin = async (pin, salt) => {
+  if (!pin || !salt) return pin;
+  const msgUint8 = new TextEncoder().encode(pin + salt);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+};
+
 // ==========================================
 // 🛠️ ZONA DE CONFIGURARE MAGAZIN
 // ==========================================
@@ -575,6 +584,8 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [dbLoading, setDbLoading] = useState(true);
   const isDataLoaded = useRef(false);
+  const [isParentAuthorized, setIsParentAuthorized] = useState(false);
+  const [lastActivity, setLastActivity] = useState(Date.now());
 
   // Preîncărcare imagini pentru caching browser
   useEffect(() => {
@@ -766,6 +777,30 @@ export default function App() {
     return () => clearInterval(interval);
   }, [user]);
 
+  // Auto-logout din Dashboard (5 min inactivitate)
+  useEffect(() => {
+    if (view !== "parent") return;
+
+    const checkInactivity = setInterval(() => {
+      const inactiveTime = Date.now() - lastActivity;
+      if (inactiveTime > 5 * 60 * 1000) { // 5 minute
+        setIsParentAuthorized(false);
+        setView("menu");
+        alert("Sesiunea de administrator a expirat din motive de securitate.");
+      }
+    }, 10000);
+
+    return () => clearInterval(checkInactivity);
+  }, [view, lastActivity]);
+
+  // Resetare autorizare la schimbarea vederii
+  useEffect(() => {
+    if (view !== "parent" && view !== "pin_entry") {
+      setIsParentAuthorized(false);
+    }
+    setLastActivity(Date.now());
+  }, [view]);
+
   const logError = (type) => {
     setAnalytics(prev => ({
       ...prev,
@@ -928,7 +963,7 @@ export default function App() {
             shopItems={shopItems}
           />
         )}
-        {view === "parent" && (
+        {view === "parent" && isParentAuthorized && (
           <ParentDashboard
             points={points}
             setPoints={setPoints}
@@ -949,9 +984,13 @@ export default function App() {
         {view === "pin_entry" && (
           <PinEntryScreen
             correctPin={parentPin}
-            onCorrect={() => setView("parent")}
+            onCorrect={() => {
+              setIsParentAuthorized(true);
+              setView("parent");
+            }}
             onCancel={() => setView("menu")}
             userEmail={user?.email}
+            uid={user?.uid}
             onForgotPin={async () => {
               if (window.confirm("Vrei să resetezi PIN-ul? Vei primi un email de resetare a parolei și vei fi deconectat pentru siguranță.")) {
                 try {
@@ -969,7 +1008,10 @@ export default function App() {
       </main>
 
       {user && parentPin === null && !dbLoading && (
-        <PinSetupScreen setParentPin={setParentPin} />
+        <PinSetupScreen setParentPin={async (pin) => {
+          const hashed = await hashPin(pin, user.uid);
+          setParentPin(hashed);
+        }} />
       )}
     </div>
   );
@@ -2201,16 +2243,18 @@ function PinSetupScreen({ setParentPin }) {
   );
 }
 
-function PinEntryScreen({ correctPin, onCorrect, onCancel, onForgotPin, userEmail }) {
+function PinEntryScreen({ correctPin, onCorrect, onCancel, onForgotPin, userEmail, uid }) {
   const [input, setInput] = useState("");
   const [isError, setIsError] = useState(false);
 
-  const handleKey = (num) => {
+  const handleKey = async (num) => {
     if (input.length < 4) {
       const newInput = input + num;
       setInput(newInput);
       if (newInput.length === 4) {
-        if (newInput === correctPin) {
+        // Verificăm PIN-ul (suportăm și formatul vechi plain text pentru migrare)
+        const hashedInput = await hashPin(newInput, uid);
+        if (newInput === correctPin || hashedInput === correctPin) {
           onCorrect();
         } else {
           setIsError(true);
