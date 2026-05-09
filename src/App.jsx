@@ -131,6 +131,13 @@ const INITIAL_SHOP_ITEMS = [
     icon: "🎉",
     description: "Biletul magic! (Aprobare necesară de la părinți/profesor)",
   },
+  {
+    id: 6,
+    name: "Schimbare Nume Teo",
+    cost: 870,
+    icon: "🏷️",
+    description: "Ai dreptul să îi pui animalului tău virtual un nume nou, ales de tine!",
+  },
 ];
 
 function AuthScreen() {
@@ -368,20 +375,20 @@ function PetScreen({ petState, setPetState, points, setPoints, addHistory, setVi
       cost = 20;
       if (points < cost) return alert("Nu ai suficiente comori!");
       newFood = Math.min(100, newFood + 30);
-      message = "L-ai hrănit pe Teo cu un pește delicios!";
+      message = `L-ai hrănit pe ${petState.name} cu un pește delicios!`;
     } else if (actionType === "dessert") {
       cost = 10;
       if (points < cost) return alert("Nu ai suficiente comori!");
       newFood = Math.min(100, newFood + 15);
       newJoy = Math.min(100, newJoy + 5);
-      message = "Teo a primit un desert dulce!";
+      message = `${petState.name} a primit un desert dulce!`;
     } else if (actionType === "play") {
       cost = 30;
       if (points < cost) return alert("Nu ai suficiente comori!");
       if (newEnergy < 20) return alert("Teo e prea obosit pentru a se juca acum!");
       newJoy = Math.min(100, newJoy + 40);
       newEnergy = Math.max(0, newEnergy - 20);
-      message = "Te-ai jucat cu Teo! Este foarte fericit.";
+      message = `Te-ai jucat cu ${petState.name}! Este foarte fericit.`;
     } else if (actionType === "sleep") {
       cost = 0;
       setPetState({
@@ -389,7 +396,7 @@ function PetScreen({ petState, setPetState, points, setPoints, addHistory, setVi
         sleepUntil: Date.now() + 15 * 60 * 1000,
         lastInteraction: Date.now()
       });
-      addHistory("Teo s-a dus la culcare pentru 15 minute.", 0, "info");
+      addHistory(`${petState.name} s-a dus la culcare pentru 15 minute.`, 0, "info");
       return;
     } else if (actionType === "revive") {
       cost = 300;
@@ -398,7 +405,7 @@ function PetScreen({ petState, setPetState, points, setPoints, addHistory, setVi
         food: 100, joy: 100, energy: 100, isDead: false, lastInteraction: Date.now(), sleepUntil: null
       });
       setPoints((prev) => prev - cost);
-      addHistory("O minune! Teo a revenit la viață, fericit și plin de energie!", -cost, "spend");
+      addHistory(`O minune! ${petState.name} a revenit la viață, fericit și plin de energie!`, -cost, "spend");
       return;
     }
 
@@ -424,7 +431,7 @@ function PetScreen({ petState, setPetState, points, setPoints, addHistory, setVi
         <button onClick={() => setView("menu")} className="text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 p-3 rounded-full transition-colors">
           <MapIcon size={24} />
         </button>
-        <h2 className="text-3xl font-black text-slate-800">Prietenul Teo</h2>
+        <h2 className="text-3xl font-black text-slate-800">Prietenul {petState.name}</h2>
         <div className="font-bold text-yellow-600 bg-yellow-100 border-2 border-yellow-200 px-4 py-2 rounded-xl flex items-center gap-2">
           {points} <Star size={20} className="fill-yellow-500 text-yellow-500" />
         </div>
@@ -444,7 +451,7 @@ function PetScreen({ petState, setPetState, points, setPoints, addHistory, setVi
 
       {petState.isDead ? (
         <div className="bg-red-50 text-red-900 p-6 rounded-[2rem] mb-8 font-bold border-4 border-red-200 shadow-inner">
-          <h3 className="text-2xl mb-3 text-red-600 font-black">Oh nu... Teo ne-a părăsit! 😭</h3>
+          <h3 className="text-2xl mb-3 text-red-600 font-black">Oh nu... {petState.name} ne-a părăsit! 😭</h3>
           <p className="text-red-800/80 mb-6 font-medium leading-relaxed">
             A stat prea mult timp fără mâncare. Ai pierdut toate comorile. Ai nevoie de <strong className="text-red-700 bg-red-200 px-2 py-1 rounded">300⭐</strong> din Pădurea Magică pentru a-l aduce înapoi!
           </p>
@@ -522,7 +529,7 @@ export default function App() {
   const [maxLevel, setMaxLevel] = useState(1);
   const [levelProgress, setLevelProgress] = useState(0);
   const [currentPlayingLevel, setCurrentPlayingLevel] = useState(1);
-  const [petState, setPetState] = useState({ food: 100, joy: 100, energy: 100, lastInteraction: Date.now() });
+  const [petState, setPetState] = useState({ name: "Teo", food: 100, joy: 100, energy: 100, lastInteraction: Date.now() });
   const [parentPin, setParentPin] = useState(null);
   const [resetPinRequested, setResetPinRequested] = useState(false);
   const [analytics, setAnalytics] = useState({
@@ -611,7 +618,7 @@ export default function App() {
               // Actualizarea în Firebase se va face prin useEffect-ul de salvare
             }
             
-            let loadedPet = data.petState ?? { food: 100, joy: 100, energy: 100, lastInteraction: Date.now() };
+            let loadedPet = data.petState ?? { name: "Teo", food: 100, joy: 100, energy: 100, lastInteraction: Date.now() };
             const now = Date.now();
             
             if (loadedPet.sleepUntil && now >= loadedPet.sleepUntil) {
@@ -639,7 +646,7 @@ export default function App() {
             setHomework([]);
             setMaxLevel(1);
             setLevelProgress(0);
-            setPetState({ food: 100, joy: 100, energy: 100, lastInteraction: Date.now() });
+            setPetState({ name: "Teo", food: 100, joy: 100, energy: 100, lastInteraction: Date.now() });
             setParentPin(null);
           }
           isDataLoaded.current = true;
@@ -1675,6 +1682,20 @@ function ParentDashboard({
   };
 
   const handleUseInventoryItem = (indexToRemove, itemName) => {
+    const itemToUse = inventory[indexToRemove];
+
+    if (itemToUse.id === 6) {
+      const newName = prompt(
+        "Introdu noul nume pentru prietenul tău virtual:",
+        petState.name,
+      );
+      if (newName && newName.trim() !== "") {
+        setPetState((prev) => ({ ...prev, name: newName.trim() }));
+      } else {
+        return; // Anulăm folosirea dacă nu a introdus nume
+      }
+    }
+
     setInventory((prev) => {
       const newInv = [...prev];
       const item = newInv[indexToRemove];
