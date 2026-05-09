@@ -661,6 +661,9 @@ export default function App() {
             }
             
             let loadedPet = data.petState ?? { name: "Pet", food: 100, joy: 100, energy: 100, lastInteraction: Date.now(), playUntil: null, playImage: null };
+            // Dacă pet-ul există dar nu are nume (migrare utilizatori vechi), îi punem numele default
+            if (!loadedPet.name) loadedPet.name = "Pet";
+            
             const now = Date.now();
             
             if (loadedPet.sleepUntil && now >= loadedPet.sleepUntil) {
