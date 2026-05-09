@@ -472,7 +472,7 @@ function PetScreen({ petState, setPetState, points, setPoints, addHistory, setVi
           <img 
             src={getPetImage()} 
             alt={`${petState.name} Virtual Pet`} 
-            className={`w-64 h-64 object-contain transition-all duration-1000 ${petState.isDead ? 'opacity-40 grayscale contrast-125 sepia blur-[1px]' : isSleeping ? 'opacity-90' : (petState.joy > 70 ? 'animate-float' : 'animate-wiggle')}`} 
+            className={`w-80 h-80 sm:w-96 sm:h-96 object-contain transition-all duration-1000 ${petState.isDead ? 'opacity-40 grayscale contrast-125 sepia blur-[1px]' : isSleeping ? 'opacity-90' : (petState.joy > 70 ? 'animate-float' : 'animate-wiggle')}`} 
           />
           {isSleeping && !petState.isDead && (
             <div className="absolute top-0 right-0 animate-bounce text-4xl">💤</div>
