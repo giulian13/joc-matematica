@@ -270,7 +270,11 @@ function AuthScreen({ t, lang }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-300 via-sky-100 to-indigo-100 flex items-center justify-center p-4 font-sans text-slate-800">
+    <div 
+      className="min-h-screen flex items-center justify-center p-4 font-sans text-slate-800 bg-cover bg-center bg-fixed relative"
+      style={{ backgroundImage: "url('/background.png')" }}
+    >
+      <div className="absolute inset-0 bg-gradient-to-b from-sky-400/60 to-indigo-900/60 pointer-events-none"></div>
       <div className="bg-white p-8 rounded-[3rem] shadow-2xl w-full max-w-md relative z-10 animate-fade-in border-4 border-white">
         <div className="text-6xl text-center mb-4 animate-bounce">😺</div>
         <h2 className="text-3xl font-black text-center text-blue-800 mb-6 drop-shadow-sm">
@@ -911,7 +915,12 @@ export default function App() {
   const currentBg = getBackgroundClass(view === "game" ? currentPlayingLevel : maxLevel);
 
   return (
-    <div className={`min-h-screen bg-gradient-to-b ${currentBg} transition-colors duration-[2000ms] font-sans text-slate-800 selection:bg-amber-300 relative overflow-x-hidden`}>
+    <div 
+      className="min-h-screen font-sans text-slate-800 selection:bg-amber-300 relative overflow-x-hidden bg-cover bg-center bg-fixed"
+      style={{ backgroundImage: "url('/background.png')" }}
+    >
+      {/* Overlay pentru a păstra tema culorilor și a îmbunătăți lizibilitatea */}
+      <div className={`fixed inset-0 bg-gradient-to-b ${currentBg} opacity-50 pointer-events-none transition-colors duration-[2000ms] z-0`}></div>
       <style>{`
         @keyframes float { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-20px) rotate(10deg); } }
         @keyframes float-delay { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-25px) rotate(-15deg); } }
