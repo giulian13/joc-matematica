@@ -298,6 +298,19 @@ function AuthScreen() {
   );
 }
 
+const LEVEL_REQ_POINTS = [150, 250, 400, 600];
+
+const getBackgroundClass = (level) => {
+  switch (level) {
+    case 1: return "from-emerald-400 via-green-300 to-yellow-200";
+    case 2: return "from-emerald-900 via-green-700 to-lime-800";
+    case 3: return "from-slate-900 via-purple-900 to-fuchsia-900";
+    case 4: return "from-sky-400 via-blue-300 to-indigo-200";
+    case 5: return "from-indigo-950 via-purple-900 to-pink-900";
+    default: return "from-indigo-900 via-purple-800 to-orange-900";
+  }
+};
+
 export default function App() {
   const [view, setView] = useState("menu");
   const [points, setPoints] = useState(0);
@@ -447,8 +460,10 @@ export default function App() {
     return <AuthScreen />;
   }
 
+  const currentBg = getBackgroundClass(view === "game" ? currentPlayingLevel : maxLevel);
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-900 via-purple-800 to-orange-900 font-sans text-slate-800 selection:bg-amber-300 relative overflow-x-hidden">
+    <div className={`min-h-screen bg-gradient-to-b ${currentBg} transition-colors duration-[2000ms] font-sans text-slate-800 selection:bg-amber-300 relative overflow-x-hidden`}>
       <style>{`
         @keyframes float { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-20px) rotate(10deg); } }
         @keyframes float-delay { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-25px) rotate(-15deg); } }
@@ -970,30 +985,33 @@ function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setM
         "earn",
       );
 
-      const newProgress = levelProgress + 1;
-      if (newProgress >= 5) {
+      const newProgress = levelProgress + problem.reward;
+      const targetPoints = LEVEL_REQ_POINTS[currentPlayingLevel - 1] || Infinity;
+
+      if (newProgress >= targetPoints && currentPlayingLevel === maxLevel && maxLevel < 5) {
+        setMaxLevel(maxLevel + 1);
+        setFeedback({
+          type: "success",
+          message: `Ai primit ${problem.reward} comori. Ai deblocat nivelul următor! 🎉`,
+        });
+        setTimeout(() => {
+          confetti({ particleCount: 300, spread: 100, origin: { y: 0.3 } });
+        }, 500);
+        setLevelProgress(0); // progresul se resetează la zero pentru următorul nivel
+      } else {
+        setLevelProgress(newProgress);
         if (currentPlayingLevel === maxLevel && maxLevel < 5) {
-          setMaxLevel(maxLevel + 1);
+          const pointsLeft = targetPoints - newProgress;
           setFeedback({
             type: "success",
-            message: `Ai primit ${problem.reward} comori. Ai deblocat nivelul următor! 🎉`,
+            message: `Corect! Ai primit ${problem.reward} comori. (Încă ${pointsLeft} comori necesare)`,
           });
-          setTimeout(() => {
-            confetti({ particleCount: 300, spread: 100, origin: { y: 0.3 } });
-          }, 500);
         } else {
           setFeedback({
             type: "success",
-            message: `Ai primit ${problem.reward} comori. Ai completat nivelul!`,
+            message: `Corect! Ai primit ${problem.reward} comori.`,
           });
         }
-        setLevelProgress(0);
-      } else {
-        setLevelProgress(newProgress);
-        setFeedback({
-          type: "success",
-          message: `Corect! Ai primit ${problem.reward} comori. (Progres: ${newProgress}/5)`,
-        });
       }
 
       setTimeout(() => {
