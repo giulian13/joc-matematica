@@ -311,6 +311,122 @@ const getBackgroundClass = (level) => {
   }
 };
 
+// ==========================================
+// ECRANUL PRIETENULUI TEO (TAMAGOTCHI)
+// ==========================================
+function PetScreen({ petState, setPetState, points, setPoints, addHistory, setView }) {
+  const handleAction = (actionType) => {
+    let cost = 0;
+    let newFood = petState.food;
+    let newJoy = petState.joy;
+    let newEnergy = petState.energy;
+    let message = "";
+
+    if (actionType === "fish") {
+      cost = 20;
+      if (points < cost) return alert("Nu ai suficiente comori!");
+      newFood = Math.min(100, newFood + 30);
+      message = "L-ai hrănit pe Teo cu un pește delicios!";
+    } else if (actionType === "dessert") {
+      cost = 10;
+      if (points < cost) return alert("Nu ai suficiente comori!");
+      newFood = Math.min(100, newFood + 15);
+      newJoy = Math.min(100, newJoy + 5);
+      message = "Teo a primit un desert dulce!";
+    } else if (actionType === "play") {
+      cost = 30;
+      if (points < cost) return alert("Nu ai suficiente comori!");
+      if (newEnergy < 20) return alert("Teo e prea obosit pentru a se juca acum!");
+      newJoy = Math.min(100, newJoy + 40);
+      newEnergy = Math.max(0, newEnergy - 20);
+      message = "Te-ai jucat cu Teo! Este foarte fericit.";
+    } else if (actionType === "sleep") {
+      cost = 0;
+      newEnergy = 100;
+      message = "Teo s-a odihnit și are energia la maxim!";
+    }
+
+    if (cost > 0) {
+      setPoints((prev) => prev - cost);
+      addHistory(message, -cost, "spend");
+    } else {
+      addHistory(message, 0, "info");
+    }
+
+    setPetState({
+      food: newFood,
+      joy: newJoy,
+      energy: newEnergy,
+      lastInteraction: Date.now()
+    });
+  };
+
+  return (
+    <div className="bg-white/90 backdrop-blur-md rounded-[3rem] shadow-2xl border-4 border-white overflow-hidden mt-6 relative z-10 max-w-xl mx-auto animate-fade-in p-8 text-center">
+      <div className="flex justify-between items-center mb-6">
+        <button onClick={() => setView("menu")} className="text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 p-3 rounded-full transition-colors">
+          <MapIcon size={24} />
+        </button>
+        <h2 className="text-3xl font-black text-slate-800">Prietenul Teo</h2>
+        <div className="font-bold text-yellow-600 bg-yellow-100 border-2 border-yellow-200 px-4 py-2 rounded-xl flex items-center gap-2">
+          {points} <Star size={20} className="fill-yellow-500 text-yellow-500" />
+        </div>
+      </div>
+
+      <div className="flex justify-center mb-8 relative">
+        <img src="/teo_virtual_pet.png" alt="Teo Virtual Pet" className={`w-64 h-64 object-contain ${petState.joy > 70 ? 'animate-float' : 'animate-wiggle'}`} />
+      </div>
+
+      <div className="space-y-4 mb-8 text-left">
+        <div className="bg-slate-100 p-4 rounded-2xl border border-slate-200">
+          <div className="flex justify-between mb-1">
+            <span className="font-bold flex items-center gap-2">🍗 Hrană</span>
+            <span className="font-bold text-slate-600">{petState.food}%</span>
+          </div>
+          <div className="w-full bg-slate-300 rounded-full h-4">
+            <div className={`h-4 rounded-full transition-all duration-1000 ${petState.food < 30 ? 'bg-red-500' : 'bg-emerald-500'}`} style={{ width: `${petState.food}%` }}></div>
+          </div>
+        </div>
+        
+        <div className="bg-slate-100 p-4 rounded-2xl border border-slate-200">
+          <div className="flex justify-between mb-1">
+            <span className="font-bold flex items-center gap-2">🎾 Bucurie</span>
+            <span className="font-bold text-slate-600">{petState.joy}%</span>
+          </div>
+          <div className="w-full bg-slate-300 rounded-full h-4">
+            <div className={`h-4 rounded-full transition-all duration-1000 ${petState.joy < 30 ? 'bg-red-500' : 'bg-blue-500'}`} style={{ width: `${petState.joy}%` }}></div>
+          </div>
+        </div>
+
+        <div className="bg-slate-100 p-4 rounded-2xl border border-slate-200">
+          <div className="flex justify-between mb-1">
+            <span className="font-bold flex items-center gap-2">💤 Energie</span>
+            <span className="font-bold text-slate-600">{petState.energy}%</span>
+          </div>
+          <div className="w-full bg-slate-300 rounded-full h-4">
+            <div className={`h-4 rounded-full transition-all duration-1000 ${petState.energy < 30 ? 'bg-red-500' : 'bg-yellow-500'}`} style={{ width: `${petState.energy}%` }}></div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <button onClick={() => handleAction('fish')} className="bg-orange-100 hover:bg-orange-200 text-orange-800 font-bold p-4 rounded-2xl border-2 border-orange-300 flex flex-col items-center justify-center transition-colors">
+          <span className="text-3xl mb-1">🐟</span> Hrănește (20⭐)
+        </button>
+        <button onClick={() => handleAction('dessert')} className="bg-pink-100 hover:bg-pink-200 text-pink-800 font-bold p-4 rounded-2xl border-2 border-pink-300 flex flex-col items-center justify-center transition-colors">
+          <span className="text-3xl mb-1">🧁</span> Desert (10⭐)
+        </button>
+        <button onClick={() => handleAction('play')} className="bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold p-4 rounded-2xl border-2 border-blue-300 flex flex-col items-center justify-center transition-colors">
+          <span className="text-3xl mb-1">🎾</span> Joacă-te (30⭐)
+        </button>
+        <button onClick={() => handleAction('sleep')} className="bg-indigo-100 hover:bg-indigo-200 text-indigo-800 font-bold p-4 rounded-2xl border-2 border-indigo-300 flex flex-col items-center justify-center transition-colors">
+          <span className="text-3xl mb-1">💤</span> Somn (0⭐)
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [view, setView] = useState("menu");
   const [points, setPoints] = useState(0);
@@ -321,6 +437,7 @@ export default function App() {
   const [maxLevel, setMaxLevel] = useState(1);
   const [levelProgress, setLevelProgress] = useState(0);
   const [currentPlayingLevel, setCurrentPlayingLevel] = useState(1);
+  const [petState, setPetState] = useState({ food: 100, joy: 100, energy: 100, lastInteraction: Date.now() });
 
   // Stări pentru Firebase
   const [user, setUser] = useState(null);
@@ -390,6 +507,21 @@ export default function App() {
             setHomework(data.homework ?? []);
             setMaxLevel(data.maxLevel ?? 1);
             setLevelProgress(data.levelProgress ?? 0);
+            
+            let loadedPet = data.petState ?? { food: 100, joy: 100, energy: 100, lastInteraction: Date.now() };
+            const now = Date.now();
+            const hoursPassed = (now - loadedPet.lastInteraction) / (1000 * 60 * 60);
+            if (hoursPassed > 0.1) {
+              const degrade = Math.floor(hoursPassed * 10);
+              loadedPet = {
+                ...loadedPet,
+                food: Math.max(0, loadedPet.food - degrade),
+                joy: Math.max(0, loadedPet.joy - degrade),
+                energy: Math.min(100, loadedPet.energy + Math.floor(hoursPassed * 20)),
+                lastInteraction: now
+              };
+            }
+            setPetState(loadedPet);
           } else {
             setPoints(0);
             setHistory([]);
@@ -398,6 +530,7 @@ export default function App() {
             setHomework([]);
             setMaxLevel(1);
             setLevelProgress(0);
+            setPetState({ food: 100, joy: 100, energy: 100, lastInteraction: Date.now() });
           }
           isDataLoaded.current = true;
           setDbLoading(false);
@@ -427,13 +560,13 @@ export default function App() {
       );
       setDoc(
         docRef,
-        { points, history, inventory, shopItems, homework, maxLevel, levelProgress },
+        { points, history, inventory, shopItems, homework, maxLevel, levelProgress, petState },
         { merge: true },
       ).catch((err) => console.error("Eroare Firebase la salvare:", err));
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [points, history, inventory, shopItems, homework, maxLevel, levelProgress, user]);
+  }, [points, history, inventory, shopItems, homework, maxLevel, levelProgress, petState, user]);
 
   const addHistory = (message, amount, type = "earn") => {
     const timestamp = new Date().toLocaleTimeString("ro-RO", {
@@ -559,6 +692,16 @@ export default function App() {
             setView={setView}
           />
         )}
+        {view === "pet" && (
+          <PetScreen
+            petState={petState}
+            setPetState={setPetState}
+            points={points}
+            setPoints={setPoints}
+            addHistory={addHistory}
+            setView={setView}
+          />
+        )}
         {view === "homework" && (
           <HomeworkScreen homework={homework} setHomework={setHomework} />
         )}
@@ -615,7 +758,7 @@ function MainMenu({ setView }) {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full max-w-4xl mt-12">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-3xl mt-12">
         <button
           onClick={() => setView("map")}
           className="flex flex-col items-center p-8 bg-gradient-to-b from-emerald-500 to-teal-700 border-4 border-emerald-300 rounded-[2.5rem] transition-all shadow-[0_12px_0_0_#042f2e] hover:shadow-[0_18px_0_0_#042f2e] hover:-translate-y-2 active:translate-y-3 active:shadow-none group relative overflow-hidden"
@@ -658,6 +801,21 @@ function MainMenu({ setView }) {
           </div>
           <span className="text-3xl font-black text-fuchsia-50 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)] relative z-10">
             Comori
+          </span>
+        </button>
+
+        <button
+          onClick={() => setView("pet")}
+          className="flex flex-col items-center p-8 bg-gradient-to-b from-rose-400 to-pink-600 border-4 border-pink-300 rounded-[2.5rem] transition-all shadow-[0_12px_0_0_#be123c] hover:shadow-[0_18px_0_0_#be123c] hover:-translate-y-2 active:translate-y-3 active:shadow-none group relative overflow-hidden"
+        >
+          <div className="absolute top-0 right-0 p-4 opacity-20 text-6xl group-hover:rotate-12 transition-transform duration-500">
+            🐾
+          </div>
+          <div className="bg-amber-100 p-6 rounded-full mb-4 group-hover:scale-110 transition-transform shadow-[inset_0_4px_10px_rgba(0,0,0,0.2)] text-pink-600 border-4 border-pink-400 relative z-10">
+            <span className="text-5xl">🐾</span>
+          </div>
+          <span className="text-3xl font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)] relative z-10">
+            Prietenul Teo
           </span>
         </button>
       </div>
