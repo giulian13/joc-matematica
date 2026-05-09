@@ -271,8 +271,8 @@ function AuthScreen({ t, lang }) {
 
   return (
     <div 
-      className="min-h-screen flex items-center justify-center p-4 font-sans text-slate-800 bg-cover bg-center bg-fixed relative"
-      style={{ backgroundImage: "url('/background.png')" }}
+      className="min-h-screen flex items-center justify-center p-4 font-sans text-slate-800 bg-cover bg-fixed relative"
+      style={{ backgroundImage: "url('/background.png')", backgroundPosition: "center 20%" }}
     >
       <div className="absolute inset-0 bg-gradient-to-b from-sky-400/60 to-indigo-900/60 pointer-events-none"></div>
       <div className="bg-white p-8 rounded-[3rem] shadow-2xl w-full max-w-md relative z-10 animate-fade-in border-4 border-white">
@@ -916,8 +916,8 @@ export default function App() {
 
   return (
     <div 
-      className="min-h-screen font-sans text-slate-800 selection:bg-amber-300 relative overflow-x-hidden bg-cover bg-center bg-fixed"
-      style={{ backgroundImage: "url('/background.png')" }}
+      className="min-h-screen font-sans text-slate-800 selection:bg-amber-300 relative overflow-x-hidden bg-cover bg-fixed"
+      style={{ backgroundImage: "url('/background.png')", backgroundPosition: "center 20%" }}
     >
       {/* Overlay pentru a păstra tema culorilor și a îmbunătăți lizibilitatea */}
       <div className={`fixed inset-0 bg-gradient-to-b ${currentBg} opacity-50 pointer-events-none transition-colors duration-[2000ms] z-0`}></div>
