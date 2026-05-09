@@ -692,8 +692,9 @@ export default function App() {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
       if (u) {
-        // Poți schimba email-ul de admin aici
-        setIsSuperAdmin(u.email === "gurau.iulian92@gmail.com");
+        console.log("Conectat ca:", u.email);
+        const adminEmail = "gurau.iulian92@gmail.com";
+        setIsSuperAdmin(u.email && u.email.toLowerCase() === adminEmail.toLowerCase());
       } else {
         setIsSuperAdmin(false);
         setDbLoading(false);
