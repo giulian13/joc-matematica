@@ -101,7 +101,7 @@ const INITIAL_SHOP_ITEMS = [
     name: "Sticker Virtual Stea",
     cost: 20,
     icon: "⭐",
-    description: "O stea strălucitoare pentru caietul tău.",
+    description: "O stea strălucitoare pentru colecția ta de stickers virtuale!",
   },
   {
     id: 2,
@@ -126,7 +126,7 @@ const INITIAL_SHOP_ITEMS = [
   },
   {
     id: 5,
-    name: "Fără teme la mate (1 zi)",
+    name: "Fără teme suplimentarela mate (1 zi)",
     cost: 500,
     icon: "🎉",
     description: "Biletul magic! (Aprobare necesară de la părinți/profesor)",
@@ -134,7 +134,7 @@ const INITIAL_SHOP_ITEMS = [
   {
     id: 6,
     name: "Schimbare Nume Pet",
-    cost: 870,
+    cost: 500,
     icon: "🏷️",
     description: "Ai dreptul să îi pui animalului tău virtual un nume nou, ales de tine!",
   },
@@ -575,6 +575,24 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [dbLoading, setDbLoading] = useState(true);
   const isDataLoaded = useRef(false);
+
+  // Preîncărcare imagini pentru caching browser
+  useEffect(() => {
+    const imagesToPreload = [
+      "/virtual_pet_walk.png",
+      "/teo_virtual_pet.png",
+      "/virtual_pet_happy.png",
+      "/virtual_pet_sad.png",
+      "/virtual_pet_sleepy.png",
+      "/virtual_pet_play1.png",
+      "/virtual_pet_play2.png"
+    ];
+    
+    imagesToPreload.forEach(src => {
+      const img = new Image();
+      img.src = src;
+    });
+  }, []);
 
   useEffect(() => {
     if (!auth) {
