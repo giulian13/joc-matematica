@@ -101,55 +101,120 @@ const hashPin = async (pin, salt) => {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 };
 
+const TRANSLATIONS = {
+  ro: {
+    app_title: "Aventura Pisicilor",
+    app_title_short: "Aventura",
+    menu_welcome: "Pădurea Magică!",
+    menu_subtitle: "Rezolvă misterele matematice pentru a ajuta pisicuțele să adune steluțe și să descopere comorile din magazin! 🧶✨",
+    btn_explore: "Explorează",
+    btn_missions: "Misiuni",
+    btn_treasures: "Comori",
+    btn_pet: "Prietenul",
+    shop_title: "Magazinul cu Comori",
+    shop_subtitle: "Rezolvă exerciții și cumpără premii din magazin!",
+    pet_title: "Prietenul",
+    pet_revive: "Reînviază-l pe",
+    parent_dashboard: "Dashboard Părinți",
+    parent_stats: "Statistici",
+    parent_homework: "Teme",
+    parent_shop: "Magazin",
+    parent_inventory: "Inventar",
+    parent_points: "Puncte",
+    game_correct: "🐟 Prrfect!",
+    game_wrong: "🙀 Miau...",
+    game_reward: "Recompensă",
+    game_verify: "Miau! Verifică",
+    auth_login: "Intră în Joc",
+    auth_register: "Creează Cont Nou",
+    auth_google: "Conectare cu Google",
+    auth_guest: "Joacă ca Musafir",
+    auth_forgot: "Ai uitat parola?",
+    logout: "Delogare",
+    exit: "Ieșire"
+  },
+  en: {
+    app_title: "Cat Adventure",
+    app_title_short: "Adventure",
+    menu_welcome: "Magic Forest!",
+    menu_subtitle: "Solve math mysteries to help kittens collect stars and discover shop treasures! 🧶✨",
+    btn_explore: "Explore",
+    btn_missions: "Missions",
+    btn_treasures: "Shop",
+    btn_pet: "Friend",
+    shop_title: "Treasure Shop",
+    shop_subtitle: "Solve exercises and buy prizes from the shop!",
+    pet_title: "Friend",
+    pet_revive: "Revive",
+    parent_dashboard: "Parent Dashboard",
+    parent_stats: "Stats",
+    parent_homework: "Homework",
+    parent_shop: "Shop",
+    parent_inventory: "Inventory",
+    parent_points: "Points",
+    game_correct: "🐟 Purrfect!",
+    game_wrong: "🙀 Meow...",
+    game_reward: "Reward",
+    game_verify: "Meow! Check",
+    auth_login: "Join the Game",
+    auth_register: "Create New Account",
+    auth_google: "Sign in with Google",
+    auth_guest: "Play as Guest",
+    auth_forgot: "Forgot password?",
+    logout: "Log Out",
+    exit: "Exit"
+  }
+};
+
 // ==========================================
 // 🛠️ ZONA DE CONFIGURARE MAGAZIN
 // ==========================================
 const INITIAL_SHOP_ITEMS = [
   {
     id: 1,
-    name: "Sticker Virtual Stea",
+    name: { ro: "Sticker Virtual Stea", en: "Virtual Star Sticker" },
     cost: 20,
     icon: "⭐",
-    description: "O stea strălucitoare pentru colecția ta de stickers virtuale!",
+    description: { ro: "O stea strălucitoare pentru colecția ta de stickers virtuale!", en: "A shining star for your virtual sticker collection!" },
   },
   {
     id: 2,
-    name: "5 minute de pauză",
+    name: { ro: "5 minute de pauză", en: "5 minute break" },
     cost: 50,
     icon: "⏳",
-    description: "Poți folosi acest cupon pentru 5 minute de joacă în plus.",
+    description: { ro: "Poți folosi acest cupon pentru 5 minute de joacă în plus.", en: "Use this coupon for 5 extra minutes of play." },
   },
   {
     id: 3,
-    name: "Diplomă de Campion",
+    name: { ro: "Diplomă de Campion", en: "Champion Diploma" },
     cost: 100,
     icon: "📜",
-    description: "O diplomă specială pentru abilitățile tale matematice.",
+    description: { ro: "O diplomă specială pentru abilitățile tale matematice.", en: "A special diploma for your math skills." },
   },
   {
     id: 4,
-    name: "Avatar Super-Erou",
+    name: { ro: "Avatar Super-Erou", en: "Superhero Avatar" },
     cost: 150,
     icon: "🦸‍♂️",
-    description: "Deblochează un nou personaj pentru profilul tău.",
+    description: { ro: "Deblochează un nou personaj pentru profilul tău.", en: "Unlock a new character for your profile." },
   },
   {
     id: 5,
-    name: "Fără teme suplimentarela mate (1 zi)",
+    name: { ro: "Fără teme suplimentarela mate (1 zi)", en: "No extra math homework (1 day)" },
     cost: 500,
     icon: "🎉",
-    description: "Biletul magic! (Aprobare necesară de la părinți/profesor)",
+    description: { ro: "Biletul magic! (Aprobare necesară de la părinți/profesor)", en: "The magic ticket! (Parent/teacher approval needed)" },
   },
   {
     id: 6,
-    name: "Schimbare Nume Pet",
+    name: { ro: "Schimbare Nume Pet", en: "Change Pet Name" },
     cost: 500,
     icon: "🏷️",
-    description: "Ai dreptul să îi pui animalului tău virtual un nume nou, ales de tine!",
+    description: { ro: "Ai dreptul să îi pui animalului tău virtual un nume nou, ales de tine!", en: "Get the right to give your virtual pet a new name!" },
   },
 ];
 
-function AuthScreen() {
+function AuthScreen({ t, lang }) {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -169,7 +234,7 @@ function AuthScreen() {
     } catch (err) {
       setError(
         err.message.includes("auth/")
-          ? "Adresa de email sau parola este incorectă."
+          ? (lang === "ro" ? "Adresa de email sau parola este incorectă." : "Email or password incorrect.")
           : err.message,
       );
     } finally {
@@ -185,9 +250,9 @@ function AuthScreen() {
       await signInWithPopup(auth, provider);
     } catch (err) {
       if (err.code === "auth/popup-closed-by-user") {
-        setError("Conectarea cu Google a fost anulată.");
+        setError(lang === "ro" ? "Conectarea cu Google a fost anulată." : "Google login cancelled.");
       } else {
-        setError("Eroare la conectarea cu Google: " + err.message);
+        setError(lang === "ro" ? "Eroare la conectarea cu Google: " + err.message : "Error connecting with Google: " + err.message);
       }
     } finally {
       setLoading(false);
@@ -199,7 +264,7 @@ function AuthScreen() {
     try {
       await signInAnonymously(auth);
     } catch (err) {
-      setError("Eroare la conectare.");
+      setError(lang === "ro" ? "Eroare la conectare." : "Login error.");
       setLoading(false);
     }
   };
@@ -209,7 +274,7 @@ function AuthScreen() {
       <div className="bg-white p-8 rounded-[3rem] shadow-2xl w-full max-w-md relative z-10 animate-fade-in border-4 border-white">
         <div className="text-6xl text-center mb-4 animate-bounce">😺</div>
         <h2 className="text-3xl font-black text-center text-blue-800 mb-6 drop-shadow-sm">
-          Aventura Matematică
+          {lang === "ro" ? "Aventura Matematică" : "Math Adventure"}
         </h2>
 
         {error && (
@@ -221,7 +286,7 @@ function AuthScreen() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-bold text-slate-600 mb-1">
-              Email părinte
+              {lang === "ro" ? "Email părinte" : "Parent email"}
             </label>
             <input
               type="email"
@@ -234,7 +299,7 @@ function AuthScreen() {
           </div>
           <div>
             <label className="block text-sm font-bold text-slate-600 mb-1">
-              Parolă
+              {lang === "ro" ? "Parolă" : "Password"}
             </label>
             <input
               type="password"
@@ -254,9 +319,9 @@ function AuthScreen() {
             {loading ? (
               <Loader2 className="animate-spin mx-auto" size={24} />
             ) : isLogin ? (
-              "Intră în cont"
+              t("auth_login")
             ) : (
-              "Creează cont nou"
+              t("auth_register")
             )}
           </button>
         </form>
@@ -268,15 +333,15 @@ function AuthScreen() {
             className="text-sm font-bold text-blue-600 hover:text-blue-800 underline"
           >
             {isLogin
-              ? "Nu ai cont? Creează unul gratuit."
-              : "Ai deja cont? Loghează-te."}
+              ? (lang === "ro" ? "Nu ai cont? Creează unul gratuit." : "No account? Create one for free.")
+              : (lang === "ro" ? "Ai deja cont? Loghează-te." : "Already have an account? Log in.")}
           </button>
         </div>
 
         <div className="relative flex items-center py-5">
           <div className="flex-grow border-t-2 border-slate-100"></div>
           <span className="flex-shrink-0 mx-4 text-slate-400 text-sm font-black">
-            SAU
+            {lang === "ro" ? "SAU" : "OR"}
           </span>
           <div className="flex-grow border-t-2 border-slate-100"></div>
         </div>
@@ -310,7 +375,7 @@ function AuthScreen() {
                 />
                 <path fill="none" d="M1 1h22v22H1z" />
               </svg>
-              Conectare cu Google
+              {lang === "ro" ? "Conectare cu Google" : "Login with Google"}
             </>
           )}
         </button>
@@ -322,10 +387,10 @@ function AuthScreen() {
             disabled={loading}
             className="w-full bg-slate-200 hover:bg-slate-300 text-slate-600 font-black py-4 rounded-2xl transition-all border-4 border-slate-300 active:translate-y-1 active:border-b-0"
           >
-            Intră ca Vizitator (Fără cont)
+            {lang === "ro" ? "Intră ca Vizitator (Fără cont)" : "Enter as Visitor (No account)"}
           </button>
           <p className="text-xs text-slate-400 font-bold mt-3">
-            Vizitatorii salvează progresul doar pe acest dispozitiv.
+            {lang === "ro" ? "Vizitatorii salvează progresul doar pe acest dispozitiv." : "Visitors save progress only on this device."}
           </p>
         </div>
       </div>
@@ -349,7 +414,7 @@ const getBackgroundClass = (level) => {
 // ==========================================
 // ECRANUL PRIETENULUI TEO (TAMAGOTCHI)
 // ==========================================
-function PetScreen({ petState, setPetState, points, setPoints, addHistory, setView }) {
+function PetScreen({ petState, setPetState, points, setPoints, addHistory, setView, t, lang }) {
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 1000);
@@ -369,10 +434,10 @@ function PetScreen({ petState, setPetState, points, setPoints, addHistory, setVi
 
   const handleAction = (actionType) => {
     if (petState.isDead && actionType !== "revive") {
-       return alert("Teo ne-a părăsit... Trebuie să îl reînvii mai întâi!");
+       return alert(lang === "ro" ? `${petState.name} ne-a părăsit... Trebuie să îl reînvii mai întâi!` : `${petState.name} has left us... You must revive him first!`);
     }
     if (isSleeping) {
-      return alert("Shh! Teo doarme. Revino după ce se trezește!");
+      return alert(lang === "ro" ? `Shh! ${petState.name} doarme. Revino după ce se trezește!` : `Shh! ${petState.name} is sleeping. Come back after he wakes up!`);
     }
     let cost = 0;
     let newFood = petState.food;
@@ -382,22 +447,22 @@ function PetScreen({ petState, setPetState, points, setPoints, addHistory, setVi
 
     if (actionType === "fish") {
       cost = 20;
-      if (points < cost) return alert("Nu ai suficiente comori!");
+      if (points < cost) return alert(lang === "ro" ? "Nu ai suficiente comori!" : "Not enough treasures!");
       newFood = Math.min(100, newFood + 30);
-      message = `L-ai hrănit pe ${petState.name} cu un pește delicios!`;
+      message = lang === "ro" ? `L-ai hrănit pe ${petState.name} cu un pește delicios!` : `You fed ${petState.name} a delicious fish!`;
     } else if (actionType === "dessert") {
       cost = 10;
-      if (points < cost) return alert("Nu ai suficiente comori!");
+      if (points < cost) return alert(lang === "ro" ? "Nu ai suficiente comori!" : "Not enough treasures!");
       newFood = Math.min(100, newFood + 15);
       newJoy = Math.min(100, newJoy + 5);
-      message = `${petState.name} a primit un desert dulce!`;
+      message = lang === "ro" ? `${petState.name} a primit un desert dulce!` : `${petState.name} got a sweet dessert!`;
     } else if (actionType === "play") {
       cost = 30;
-      if (points < cost) return alert("Nu ai suficiente comori!");
-      if (newEnergy < 20) return alert("Teo e prea obosit pentru a se juca acum!");
+      if (points < cost) return alert(lang === "ro" ? "Nu ai suficiente comori!" : "Not enough treasures!");
+      if (newEnergy < 20) return alert(lang === "ro" ? `${petState.name} e prea obosit pentru a se juca acum!` : `${petState.name} is too tired to play now!`);
       newJoy = Math.min(100, newJoy + 40);
       newEnergy = Math.max(0, newEnergy - 20);
-      message = `Te-ai jucat cu ${petState.name}! Este foarte fericit.`;
+      message = lang === "ro" ? `Te-ai jucat cu ${petState.name}! Este foarte fericit.` : `You played with ${petState.name}! He is very happy.`;
       
       const playImg = Math.random() > 0.5 ? 'play1' : 'play2';
       const playUntil = Date.now() + 5 * 60 * 1000;
@@ -421,16 +486,16 @@ function PetScreen({ petState, setPetState, points, setPoints, addHistory, setVi
         sleepUntil: Date.now() + 15 * 60 * 1000,
         lastInteraction: Date.now()
       });
-      addHistory(`${petState.name} s-a dus la culcare pentru 15 minute.`, 0, "info");
+      addHistory(lang === "ro" ? `${petState.name} s-a dus la culcare pentru 15 minute.` : `${petState.name} went to sleep for 15 minutes.`, 0, "info");
       return;
     } else if (actionType === "revive") {
       cost = 300;
-      if (points < cost) return alert("Nu ai suficiente comori pentru a-l reînvia!");
+      if (points < cost) return alert(lang === "ro" ? "Nu ai suficiente comori pentru a-l reînvia!" : "Not enough treasures to revive him!");
       setPetState({
         food: 100, joy: 100, energy: 100, isDead: false, lastInteraction: Date.now(), sleepUntil: null
       });
       setPoints((prev) => prev - cost);
-      addHistory(`O minune! ${petState.name} a revenit la viață, fericit și plin de energie!`, -cost, "spend");
+      addHistory(lang === "ro" ? `O minune! ${petState.name} a revenit la viață, fericit și plin de energie!` : `A miracle! ${petState.name} is back to life, happy and full of energy!`, -cost, "spend");
       return;
     }
 
@@ -470,7 +535,7 @@ function PetScreen({ petState, setPetState, points, setPoints, addHistory, setVi
         <button onClick={() => setView("menu")} className="text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 p-3 rounded-full transition-colors">
           <MapIcon size={24} />
         </button>
-        <h2 className="text-3xl font-black text-slate-800">Prietenul {petState.name}</h2>
+        <h2 className="text-3xl font-black text-slate-800">{t("pet_title")} {petState.name}</h2>
         <div className="font-bold text-yellow-600 bg-yellow-100 border-2 border-yellow-200 px-4 py-2 rounded-xl flex items-center gap-2">
           {points} <Star size={20} className="fill-yellow-500 text-yellow-500" />
         </div>
@@ -494,26 +559,30 @@ function PetScreen({ petState, setPetState, points, setPoints, addHistory, setVi
 
       {petState.isDead ? (
         <div className="bg-red-50 text-red-900 p-6 rounded-[2rem] mb-8 font-bold border-4 border-red-200 shadow-inner">
-          <h3 className="text-2xl mb-3 text-red-600 font-black">Oh nu... {petState.name} ne-a părăsit! 😭</h3>
+          <h3 className="text-2xl mb-3 text-red-600 font-black">{lang === "ro" ? `Oh nu... ${petState.name} ne-a părăsit! 😭` : `Oh no... ${petState.name} has left us! 😭`}</h3>
           <p className="text-red-800/80 mb-6 font-medium leading-relaxed">
-            A stat prea mult timp fără mâncare. Ai pierdut toate comorile. Ai nevoie de <strong className="text-red-700 bg-red-200 px-2 py-1 rounded">300⭐</strong> din Pădurea Magică pentru a-l aduce înapoi!
+            {lang === "ro" 
+              ? `A stat prea mult timp fără mâncare. Ai pierdut toate comorile. Ai nevoie de ` 
+              : `${petState.name} stayed too long without food. You lost all treasures. You need `}
+            <strong className="text-red-700 bg-red-200 px-2 py-1 rounded">300⭐</strong> 
+            {lang === "ro" ? " din Pădurea Magică pentru a-l aduce înapoi!" : " from the Magic Forest to bring him back!"}
           </p>
           <button onClick={() => handleAction('revive')} className="w-full bg-gradient-to-b from-red-500 to-rose-700 hover:from-red-600 hover:to-rose-800 text-white shadow-[0_8px_0_0_#9f1239] active:shadow-none active:translate-y-2 p-5 rounded-2xl text-xl font-black flex items-center justify-center gap-3 transition-all border-2 border-red-400">
-            ✨ Reînvie-l pe Teo (300⭐)
+            ✨ {lang === "ro" ? `Reînvie-l pe ${petState.name}` : `Revive ${petState.name}`} (300⭐)
           </button>
         </div>
       ) : (
         <>
           {isSleeping && (
             <div className="bg-indigo-100 text-indigo-800 p-4 rounded-2xl mb-8 font-bold border-2 border-indigo-300 animate-pulse">
-              Teo doarme... Se trezește în {timeDisplay}
+              {lang === "ro" ? `${petState.name} doarme... Se trezește în` : `${petState.name} is sleeping... Wakes up in`} {timeDisplay}
             </div>
           )}
 
           <div className="space-y-4 mb-8 text-left">
             <div className="bg-slate-100 p-4 rounded-2xl border border-slate-200">
               <div className="flex justify-between mb-1">
-                <span className="font-bold flex items-center gap-2">🍗 Hrană</span>
+                <span className="font-bold flex items-center gap-2">🍗 {lang === "ro" ? "Hrană" : "Food"}</span>
                 <span className="font-bold text-slate-600">{petState.food}%</span>
               </div>
               <div className="w-full bg-slate-300 rounded-full h-4">
@@ -523,7 +592,7 @@ function PetScreen({ petState, setPetState, points, setPoints, addHistory, setVi
             
             <div className="bg-slate-100 p-4 rounded-2xl border border-slate-200">
               <div className="flex justify-between mb-1">
-                <span className="font-bold flex items-center gap-2">🎾 Bucurie</span>
+                <span className="font-bold flex items-center gap-2">🎾 {lang === "ro" ? "Bucurie" : "Joy"}</span>
                 <span className="font-bold text-slate-600">{petState.joy}%</span>
               </div>
               <div className="w-full bg-slate-300 rounded-full h-4">
@@ -533,7 +602,7 @@ function PetScreen({ petState, setPetState, points, setPoints, addHistory, setVi
 
             <div className="bg-slate-100 p-4 rounded-2xl border border-slate-200">
               <div className="flex justify-between mb-1">
-                <span className="font-bold flex items-center gap-2">💤 Energie</span>
+                <span className="font-bold flex items-center gap-2">💤 {lang === "ro" ? "Energie" : "Energy"}</span>
                 <span className="font-bold text-slate-600">{petState.energy}%</span>
               </div>
               <div className="w-full bg-slate-300 rounded-full h-4">
@@ -544,16 +613,16 @@ function PetScreen({ petState, setPetState, points, setPoints, addHistory, setVi
 
           <div className="grid grid-cols-2 gap-4">
             <button onClick={() => handleAction('fish')} className="bg-orange-100 hover:bg-orange-200 text-orange-800 font-bold p-4 rounded-2xl border-2 border-orange-300 flex flex-col items-center justify-center transition-colors">
-              <span className="text-3xl mb-1">🐟</span> Hrănește (20⭐)
+              <span className="text-3xl mb-1">🐟</span> {lang === "ro" ? "Hrănește" : "Feed"} (20⭐)
             </button>
             <button onClick={() => handleAction('dessert')} className="bg-pink-100 hover:bg-pink-200 text-pink-800 font-bold p-4 rounded-2xl border-2 border-pink-300 flex flex-col items-center justify-center transition-colors">
-              <span className="text-3xl mb-1">🧁</span> Desert (10⭐)
+              <span className="text-3xl mb-1">🧁</span> {lang === "ro" ? "Desert" : "Dessert"} (10⭐)
             </button>
             <button onClick={() => handleAction('play')} className="bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold p-4 rounded-2xl border-2 border-blue-300 flex flex-col items-center justify-center transition-colors">
-              <span className="text-3xl mb-1">🎾</span> Joacă-te (30⭐)
+              <span className="text-3xl mb-1">🎾</span> {lang === "ro" ? "Joacă-te" : "Play"} (30⭐)
             </button>
             <button onClick={() => handleAction('sleep')} className="bg-indigo-100 hover:bg-indigo-200 text-indigo-800 font-bold p-4 rounded-2xl border-2 border-indigo-300 flex flex-col items-center justify-center transition-colors">
-              <span className="text-3xl mb-1">💤</span> Somn (0⭐)
+              <span className="text-3xl mb-1">💤</span> {lang === "ro" ? "Somn" : "Sleep"} (0⭐)
             </button>
           </div>
         </>
@@ -579,6 +648,9 @@ export default function App() {
     dailyTime: {},
     errorsByType: { adunare: 0, scadere: 0, inmultire: 0, impartire: 0 }
   });
+  const [lang, setLang] = useState("ro");
+
+  const t = (key) => TRANSLATIONS[lang][key] || key;
 
   // Stări pentru Firebase
   const [user, setUser] = useState(null);
@@ -786,7 +858,7 @@ export default function App() {
       if (inactiveTime > 5 * 60 * 1000) { // 5 minute
         setIsParentAuthorized(false);
         setView("menu");
-        alert("Sesiunea de administrator a expirat din motive de securitate.");
+        alert(lang === "ro" ? "Sesiunea de administrator a expirat din motive de securitate." : "Admin session expired for security reasons.");
       }
     }, 10000);
 
@@ -827,13 +899,13 @@ export default function App() {
     return (
       <div className="min-h-screen bg-indigo-900 flex flex-col items-center justify-center">
         <Loader2 className="animate-spin text-amber-400 mb-4" size={64} />
-        <p className="text-xl font-bold text-amber-100">Se încarcă magia...</p>
+        <p className="text-xl font-bold text-amber-100">{lang === "ro" ? "Se încarcă magia..." : "Magic is loading..."}</p>
       </div>
     );
   }
 
   if (!user && auth) {
-    return <AuthScreen />;
+    return <AuthScreen t={t} lang={lang} />;
   }
 
   const currentBg = getBackgroundClass(view === "game" ? currentPlayingLevel : maxLevel);
@@ -886,14 +958,29 @@ export default function App() {
               <span className="text-2xl drop-shadow-md">🐱</span>
             </div>
             <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-orange-400 tracking-tight hidden sm:block drop-shadow-sm">
-              Aventura Pisicilor
+              {t("app_title")}
             </h1>
             <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-orange-400 tracking-tight sm:hidden drop-shadow-sm">
-              Aventura
+              {t("app_title_short")}
             </h1>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <div className="flex items-center gap-1 bg-indigo-900/50 p-1 rounded-xl border border-indigo-500/30">
+              <button 
+                onClick={() => setLang("ro")} 
+                className={`px-2 py-1 rounded-lg text-[10px] font-black transition-all ${lang === 'ro' ? 'bg-amber-400 text-amber-950 shadow-md' : 'text-indigo-200 hover:text-white'}`}
+              >
+                RO
+              </button>
+              <button 
+                onClick={() => setLang("en")} 
+                className={`px-2 py-1 rounded-lg text-[10px] font-black transition-all ${lang === 'en' ? 'bg-amber-400 text-amber-950 shadow-md' : 'text-indigo-200 hover:text-white'}`}
+              >
+                EN
+              </button>
+            </div>
+
             <button
               onClick={() => {
                 if (parentPin) setView("pin_entry");
@@ -918,12 +1005,14 @@ export default function App() {
       </header>
 
       <main className="max-w-4xl mx-auto p-4 py-8">
-        {view === "menu" && <MainMenu setView={setView} petState={petState} />}
+        {view === "menu" && <MainMenu setView={setView} petState={petState} t={t} />}
         {view === "map" && (
           <MapScreen
             setView={setView}
             maxLevel={maxLevel}
             setCurrentPlayingLevel={setCurrentPlayingLevel}
+            t={t}
+            lang={lang}
           />
         )}
         {view === "game" && (
@@ -937,6 +1026,8 @@ export default function App() {
             setLevelProgress={setLevelProgress}
             setView={setView}
             logError={logError}
+            t={t}
+            lang={lang}
           />
         )}
         {view === "pet" && (
@@ -947,10 +1038,12 @@ export default function App() {
             setPoints={setPoints}
             addHistory={addHistory}
             setView={setView}
+            t={t}
+            lang={lang}
           />
         )}
         {view === "homework" && (
-          <HomeworkScreen homework={homework} setHomework={setHomework} />
+          <HomeworkScreen homework={homework} setHomework={setHomework} t={t} lang={lang} />
         )}
         {view === "shop" && (
           <ShopScreen
@@ -961,6 +1054,8 @@ export default function App() {
             history={history}
             addHistory={addHistory}
             shopItems={shopItems}
+            t={t}
+            lang={lang}
           />
         )}
         {view === "parent" && isParentAuthorized && (
@@ -979,6 +1074,8 @@ export default function App() {
             setView={setView}
             petState={petState}
             setPetState={setPetState}
+            lang={lang}
+            t={t}
           />
         )}
         {view === "pin_entry" && (
@@ -991,15 +1088,19 @@ export default function App() {
             onCancel={() => setView("menu")}
             userEmail={user?.email}
             uid={user?.uid}
+            lang={lang}
             onForgotPin={async () => {
-              if (window.confirm("Vrei să resetezi PIN-ul? Vei primi un email de resetare a parolei și vei fi deconectat pentru siguranță.")) {
+              const confirmMsg = lang === "ro" 
+                ? "Vrei să resetezi PIN-ul? Vei primi un email de resetare a parolei și vei fi deconectat pentru siguranță."
+                : "Do you want to reset the PIN? You will receive a password reset email and be logged out for safety.";
+              if (window.confirm(confirmMsg)) {
                 try {
                   await sendPasswordResetEmail(auth, user.email);
                   setResetPinRequested(true);
                   // Așteptăm puțin pentru a ne asigura că flag-ul e trimis spre Firebase înainte de logout
                   setTimeout(() => signOut(auth), 1000);
                 } catch (err) {
-                  alert("Eroare: " + err.message);
+                  alert(lang === "ro" ? "Eroare: " + err.message : "Error: " + err.message);
                 }
               }
             }}
@@ -1011,7 +1112,7 @@ export default function App() {
         <PinSetupScreen setParentPin={async (pin) => {
           const hashed = await hashPin(pin, user.uid);
           setParentPin(hashed);
-        }} />
+        }} lang={lang} />
       )}
     </div>
   );
@@ -1020,7 +1121,7 @@ export default function App() {
 // ==========================================
 // MENIUL PRINCIPAL
 // ==========================================
-function MainMenu({ setView, petState }) {
+function MainMenu({ setView, petState, t }) {
   return (
     <div className="flex flex-col items-center justify-center space-y-8 animate-fade-in mt-6 relative z-10">
       <div className="relative">
@@ -1032,11 +1133,10 @@ function MainMenu({ setView, petState }) {
 
       <div className="text-center space-y-4 max-w-2xl">
         <h2 className="text-5xl sm:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-b from-amber-100 to-amber-400 drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)] animate-wiggle pb-2">
-          Pădurea Magică!
+          {t("menu_welcome")}
         </h2>
         <p className="text-xl text-indigo-100 font-bold text-center bg-indigo-950/60 p-6 rounded-[2rem] backdrop-blur-md border-2 border-indigo-500/50 shadow-2xl leading-relaxed">
-          Rezolvă misterele matematice pentru a ajuta pisicuțele să adune
-          steluțe și să descopere comorile din magazin! 🧶✨
+          {t("menu_subtitle")}
         </p>
       </div>
 
@@ -1052,7 +1152,7 @@ function MainMenu({ setView, petState }) {
             <Play size={48} className="ml-2 fill-emerald-600" />
           </div>
           <span className="text-3xl font-black text-emerald-50 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)] relative z-10">
-            Explorează
+            {t("btn_explore")}
           </span>
         </button>
 
@@ -1067,7 +1167,7 @@ function MainMenu({ setView, petState }) {
             <BookOpen size={48} className="fill-orange-600 text-orange-600" />
           </div>
           <span className="text-3xl font-black text-amber-50 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)] relative z-10 text-center">
-            Misiuni
+            {t("btn_missions")}
           </span>
         </button>
 
@@ -1082,7 +1182,7 @@ function MainMenu({ setView, petState }) {
             <ShoppingCart size={48} className="fill-purple-600" />
           </div>
           <span className="text-3xl font-black text-fuchsia-50 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)] relative z-10">
-            Comori
+            {t("btn_treasures")}
           </span>
         </button>
 
@@ -1097,7 +1197,7 @@ function MainMenu({ setView, petState }) {
             <span className="text-5xl">🐾</span>
           </div>
           <span className="text-3xl font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)] relative z-10">
-            Prietenul {petState.name}
+            {t("btn_pet")} {petState.name}
           </span>
         </button>
       </div>
@@ -1108,7 +1208,7 @@ function MainMenu({ setView, petState }) {
 // ==========================================
 // ECRANUL DE TEME (PENTRU COPIL)
 // ==========================================
-function HomeworkScreen({ homework, setHomework }) {
+function HomeworkScreen({ homework, setHomework, t, lang }) {
   const [answers, setAnswers] = useState({});
 
   const handleAnswerChange = (id, text) => {
@@ -1143,10 +1243,10 @@ function HomeworkScreen({ homework, setHomework }) {
           <div className="absolute inset-0 bg-math-pattern opacity-50"></div>
           <div className="relative z-10">
             <h2 className="text-white text-xl font-black opacity-90 uppercase tracking-widest mb-4 drop-shadow-sm">
-              Teme Speciale
+              {lang === "ro" ? "Teme Speciale" : "Special Homework"}
             </h2>
             <div className="text-white font-black drop-shadow-lg text-4xl mb-2">
-              Exerciții de la Părinți
+              {lang === "ro" ? "Exerciții de la Părinți" : "Parent Challenges"}
             </div>
           </div>
         </div>
@@ -1156,10 +1256,10 @@ function HomeworkScreen({ homework, setHomework }) {
             <div className="text-center py-10">
               <div className="text-6xl mb-4">🎉</div>
               <h3 className="text-2xl font-bold text-slate-700">
-                Nu ai nicio temă nouă!
+                {lang === "ro" ? "Nu ai nicio temă nouă!" : "No new homework!"}
               </h3>
               <p className="text-slate-500 mt-2">
-                Te poți întoarce la joacă sau în magazin.
+                {lang === "ro" ? "Te poți întoarce la joacă sau în magazin." : "You can go back to playing or shopping."}
               </p>
             </div>
           ) : (
@@ -1187,7 +1287,7 @@ function HomeworkScreen({ homework, setHomework }) {
                       {hw.status === "returned" && (
                         <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-xl">
                           <p className="text-sm font-bold text-red-700 mb-1">
-                            Mesaj de la părinte (Trebuie refăcut):
+                            {lang === "ro" ? "Mesaj de la părinte (Trebuie refăcut):" : "Parent message (To be redone):"}
                           </p>
                           <p className="text-red-900 font-medium">
                             {hw.parentComment}
@@ -1203,7 +1303,7 @@ function HomeworkScreen({ homework, setHomework }) {
                         onChange={(e) =>
                           handleAnswerChange(hw.id, e.target.value)
                         }
-                        placeholder="Scrie răspunsul sau explicația aici..."
+                        placeholder={lang === "ro" ? "Scrie răspunsul sau explicația aici..." : "Write your answer or explanation here..."}
                         className="w-full p-4 border-2 border-orange-300 rounded-2xl focus:outline-none focus:border-orange-500 font-bold text-slate-700 resize-none"
                         rows="2"
                       />
@@ -1212,21 +1312,21 @@ function HomeworkScreen({ homework, setHomework }) {
                         className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-xl transition-all shadow-md active:translate-y-1"
                       >
                         {hw.status === "returned"
-                          ? "Trimite din nou"
-                          : "Trimite Răspunsul"}
+                          ? (lang === "ro" ? "Trimite din nou" : "Resubmit")
+                          : (lang === "ro" ? "Trimite Răspunsul" : "Submit Answer")}
                       </button>
                     </div>
                   ) : (
                     <div className="bg-white/60 p-4 rounded-xl border-2 border-orange-100">
                       <p className="text-sm text-slate-500 font-bold mb-1">
-                        Răspunsul tău:
+                        {lang === "ro" ? "Răspunsul tău:" : "Your answer:"}
                       </p>
                       <p className="text-lg font-black text-slate-800">
                         {hw.childAnswer}
                       </p>
                       <div className="mt-3 flex items-center gap-2 text-orange-600 font-bold">
                         <Loader2 className="animate-spin" size={18} />
-                        Așteaptă corectarea...
+                        {lang === "ro" ? "Așteaptă corectarea..." : "Waiting for review..."}
                       </div>
                     </div>
                   )}
@@ -1244,22 +1344,22 @@ function HomeworkScreen({ homework, setHomework }) {
 // HARTA AVENTURII
 // ==========================================
 const LEVELS = [
-  { id: 1, name: "Poiana Însorită", icon: "🌻", description: "Începutul aventurii" },
-  { id: 2, name: "Pădurea de Basm", icon: "🌲", description: "Printre copaci fermecați" },
-  { id: 3, name: "Peștera Cristalelor", icon: "💎", description: "Scântei în întuneric" },
-  { id: 4, name: "Castelul Norilor", icon: "🏰", description: "Acolo sus pe cer" },
-  { id: 5, name: "Tărâmul Magic", icon: "✨", description: "Cea mai mare provocare" },
+  { id: 1, name: { ro: "Poiana Însorită", en: "Sunny Meadow" }, icon: "🌻", description: { ro: "Începutul aventurii", en: "Start of the adventure" } },
+  { id: 2, name: { ro: "Pădurea de Basm", en: "Fairy Tale Forest" }, icon: "🌲", description: { ro: "Printre copaci fermecați", en: "Among enchanted trees" } },
+  { id: 3, name: { ro: "Peștera Cristalelor", en: "Crystal Cave" }, icon: "💎", description: { ro: "Scântei în întuneric", en: "Sparkles in the dark" } },
+  { id: 4, name: { ro: "Castelul Norilor", en: "Cloud Castle" }, icon: "🏰", description: { ro: "Acolo sus pe cer", en: "High up in the sky" } },
+  { id: 5, name: { ro: "Tărâmul Magic", en: "Magic Land" }, icon: "✨", description: { ro: "Cea mai mare provocare", en: "The ultimate challenge" } },
 ];
 
-function MapScreen({ setView, maxLevel, setCurrentPlayingLevel }) {
+function MapScreen({ setView, maxLevel, setCurrentPlayingLevel, t, lang }) {
   return (
     <div className="flex flex-col items-center justify-center space-y-8 animate-fade-in mt-6 relative z-10 max-w-2xl mx-auto">
       <div className="text-center mb-8">
         <h2 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-b from-amber-100 to-amber-400 drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)] pb-2">
-          Harta Aventurii
+          {lang === "ro" ? "Harta Aventurii" : "Adventure Map"}
         </h2>
         <p className="text-xl text-indigo-100 font-bold bg-indigo-950/60 p-4 rounded-3xl backdrop-blur-md mt-4 border-2 border-indigo-500/50 shadow-2xl">
-          Alege un nivel pentru a continua povestea!
+          {lang === "ro" ? "Alege un nivel pentru a continua povestea!" : "Choose a level to continue the story!"}
         </p>
       </div>
 
@@ -1271,39 +1371,39 @@ function MapScreen({ setView, maxLevel, setCurrentPlayingLevel }) {
               <div className="w-1/2 flex justify-end">
                 {index % 2 === 0 && (
                   <div className={`p-4 rounded-2xl text-right ${isUnlocked ? 'bg-white/90 shadow-xl' : 'bg-slate-800/80 text-slate-400'} border-4 ${isUnlocked ? 'border-amber-400' : 'border-slate-700'}`}>
-                    <h3 className="font-black text-lg">{level.name}</h3>
-                    <p className="text-sm font-medium hidden sm:block">{level.description}</p>
-                  </div>
-                )}
-              </div>
+                     <h3 className="font-black text-lg">{level.name[lang]}</h3>
+                     <p className="text-sm font-medium hidden sm:block">{level.description[lang]}</p>
+                   </div>
+                 )}
+               </div>
 
-              <button
-                onClick={() => {
-                  if (isUnlocked) {
-                    setCurrentPlayingLevel(level.id);
-                    setView("game");
-                  }
-                }}
-                className={`relative shrink-0 w-20 h-20 rounded-full border-4 flex items-center justify-center text-3xl shadow-xl transition-transform ${isUnlocked ? 'bg-gradient-to-br from-amber-300 to-orange-500 border-white hover:scale-110 active:scale-95 z-10 cursor-pointer' : 'bg-slate-700 border-slate-500 opacity-80 cursor-not-allowed'}`}
-              >
-                {isUnlocked ? level.icon : <Lock size={28} className="text-slate-400" />}
-              </button>
+               <button
+                 onClick={() => {
+                   if (isUnlocked) {
+                     setCurrentPlayingLevel(level.id);
+                     setView("game");
+                   }
+                 }}
+                 className={`relative shrink-0 w-20 h-20 rounded-full border-4 flex items-center justify-center text-3xl shadow-xl transition-transform ${isUnlocked ? 'bg-gradient-to-br from-amber-300 to-orange-500 border-white hover:scale-110 active:scale-95 z-10 cursor-pointer' : 'bg-slate-700 border-slate-500 opacity-80 cursor-not-allowed'}`}
+               >
+                 {isUnlocked ? level.icon : <Lock size={28} className="text-slate-400" />}
+               </button>
 
-              <div className="w-1/2 flex justify-start">
-                {index % 2 !== 0 && (
-                  <div className={`p-4 rounded-2xl text-left ${isUnlocked ? 'bg-white/90 shadow-xl' : 'bg-slate-800/80 text-slate-400'} border-4 ${isUnlocked ? 'border-amber-400' : 'border-slate-700'}`}>
-                    <h3 className="font-black text-lg">{level.name}</h3>
-                    <p className="text-sm font-medium hidden sm:block">{level.description}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      <button onClick={() => setView("menu")} className="mt-8 px-6 py-3 bg-indigo-800 hover:bg-indigo-700 text-white font-bold rounded-2xl transition-colors border-2 border-indigo-400">
-        Înapoi la Meniu
-      </button>
+               <div className="w-1/2 flex justify-start">
+                 {index % 2 !== 0 && (
+                   <div className={`p-4 rounded-2xl text-left ${isUnlocked ? 'bg-white/90 shadow-xl' : 'bg-slate-800/80 text-slate-400'} border-4 ${isUnlocked ? 'border-amber-400' : 'border-slate-700'}`}>
+                     <h3 className="font-black text-lg">{level.name[lang]}</h3>
+                     <p className="text-sm font-medium hidden sm:block">{level.description[lang]}</p>
+                   </div>
+                 )}
+               </div>
+             </div>
+           );
+         })}
+       </div>
+       <button onClick={() => setView("menu")} className="mt-8 px-6 py-3 bg-indigo-800 hover:bg-indigo-700 text-white font-bold rounded-2xl transition-colors border-2 border-indigo-400">
+         {lang === "ro" ? "Înapoi la Meniu" : "Back to Menu"}
+       </button>
     </div>
   );
 }
@@ -1311,7 +1411,7 @@ function MapScreen({ setView, maxLevel, setCurrentPlayingLevel }) {
 // ==========================================
 // ECRANUL DE JOC (LOGICA MATEMATICĂ)
 // ==========================================
-function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setMaxLevel, levelProgress, setLevelProgress, setView, logError }) {
+function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setMaxLevel, levelProgress, setLevelProgress, setView, logError, t, lang }) {
   const [problem, setProblem] = useState(null);
   const [answer, setAnswer] = useState("");
   const [feedback, setFeedback] = useState(null);
@@ -1431,7 +1531,9 @@ function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setM
 
       setPoints((prev) => prev + problem.reward);
       addHistory(
-        `Provocare completată: ${problem.text} = ${problem.answer}`,
+        lang === "ro" 
+          ? `Provocare completată: ${problem.text} = ${problem.answer}`
+          : `Challenge completed: ${problem.text} = ${problem.answer}`,
         problem.reward,
         "earn",
       );
@@ -1443,7 +1545,9 @@ function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setM
         setMaxLevel(maxLevel + 1);
         setFeedback({
           type: "success",
-          message: `Ai primit ${problem.reward} comori. Ai deblocat nivelul următor! 🎉`,
+          message: lang === "ro" 
+            ? `Ai primit ${problem.reward} comori. Ai deblocat nivelul următor! 🎉`
+            : `You got ${problem.reward} treasures. You unlocked the next level! 🎉`,
         });
         setTimeout(() => {
           confetti({ particleCount: 300, spread: 100, origin: { y: 0.3 } });
@@ -1453,9 +1557,11 @@ function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setM
         setLevelProgress(newProgress);
         if (currentPlayingLevel === maxLevel && maxLevel < 5) {
           const pointsLeft = targetPoints - newProgress;
-          setFeedback({
+        setFeedback({
             type: "success",
-            message: `Corect! Ai primit ${problem.reward} comori. (Încă ${pointsLeft} comori necesare)`,
+            message: lang === "ro"
+              ? `Corect! Ai primit ${problem.reward} comori. (Încă ${pointsLeft} comori necesare)`
+              : `Correct! You got ${problem.reward} treasures. (${pointsLeft} more needed)`,
           });
         } else {
           setFeedback({
@@ -1469,9 +1575,9 @@ function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setM
         generateProblem();
       }, 2500);
     } else {
-      setFeedback({ type: "error", message: `Greșit. Mai încearcă!` });
+      setFeedback({ type: "error", message: lang === "ro" ? `Greșit. Mai încearcă!` : `Wrong. Try again!` });
       logError(problem.opType);
-      addHistory(`Ai ratat provocarea: ${problem.text}`, 0, "fail");
+      addHistory(lang === "ro" ? `Ai ratat provocarea: ${problem.text}` : `You missed the challenge: ${problem.text}`, 0, "fail");
       setAnswer("");
       if (inputRef.current) inputRef.current.focus();
     }
@@ -1499,7 +1605,7 @@ function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setM
               </button>
               <div className="inline-block bg-amber-900/50 px-6 py-2 rounded-full border border-amber-500/30">
                 <h2 className="text-amber-200 text-sm font-black uppercase tracking-[0.3em] drop-shadow-sm flex items-center gap-2">
-                  <span>🐾</span> Nivel {currentPlayingLevel} <span>🐾</span>
+                  <span>🐾</span> {lang === "ro" ? "Nivel" : "Level"} {currentPlayingLevel} <span>🐾</span>
                 </h2>
               </div>
               <div className="w-10"></div>
@@ -1514,7 +1620,7 @@ function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setM
                 size={24}
                 className="fill-amber-400 text-amber-400 animate-pulse"
               />
-              Recompensă: {problem.reward} comori
+              {lang === "ro" ? "Recompensă" : "Reward"}: {problem.reward} {lang === "ro" ? "comori" : "treasures"}
             </div>
           </div>
         </div>
@@ -1538,7 +1644,7 @@ function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setM
             className="w-full mt-8 bg-gradient-to-b from-emerald-500 to-teal-700 hover:from-emerald-400 hover:to-teal-600 text-amber-50 text-3xl font-black py-6 rounded-[2rem] border-4 border-emerald-800 shadow-[0_10px_0_0_#064e3b] active:translate-y-3 active:shadow-none transition-all flex justify-center items-center gap-3 group relative overflow-hidden"
           >
             <div className="absolute inset-0 bg-white/10 group-hover:bg-white/20 transition-colors"></div>
-            Miau! Verifică{" "}
+            {t("game_verify")}{" "}
             <Check
               size={40}
               className="group-hover:scale-125 transition-transform drop-shadow-md"
@@ -1551,7 +1657,7 @@ function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setM
             <div
               className={`p-6 rounded-[2rem] font-black text-center text-xl shadow-inner border-4 ${feedback.type === "success" ? "bg-gradient-to-r from-emerald-100 to-emerald-200 text-emerald-900 animate-pop border-emerald-400" : "bg-gradient-to-r from-rose-100 to-rose-200 text-rose-900 animate-wiggle border-rose-400"}`}
             >
-              {feedback.type === "success" ? "🐟 Prrfect! " : "🙀 Miau... "}
+              {feedback.type === "success" ? (lang === "ro" ? "🐟 Prrfect! " : "🐟 Purrfect! ") : (lang === "ro" ? "🙀 Miau... " : "🙀 Meow... ")}
               {feedback.message}
             </div>
           </div>
@@ -1572,6 +1678,8 @@ function ShopScreen({
   history,
   addHistory,
   shopItems,
+  t,
+  lang,
 }) {
   const [activeTab, setActiveTab] = useState("shop");
 
@@ -1590,10 +1698,13 @@ function ShopScreen({
         }
         return [...prev, { ...item, quantity: 1, purchaseDate: new Date() }];
       });
-      addHistory(`Ai cumpărat: ${item.name}`, -item.cost, "spend");
+      const itemName = typeof item.name === "object" ? item.name[lang] : item.name;
+      addHistory(`${lang === "ro" ? "Ai cumpărat" : "You bought"}: ${itemName}`, -item.cost, "spend");
     } else {
       alert(
-        "Nu ai suficiente puncte! Joacă mai mult pentru a strânge steluțe.",
+        lang === "ro" 
+          ? "Nu ai suficiente puncte! Joacă mai mult pentru a strânge steluțe."
+          : "Not enough points! Play more to collect stars."
       );
     }
   };
@@ -1605,13 +1716,13 @@ function ShopScreen({
           onClick={() => setActiveTab("shop")}
           className={`flex-1 py-5 text-xl font-black transition-colors ${activeTab === "shop" ? "bg-purple-100 text-purple-800 border-b-4 border-purple-500" : "text-slate-500 hover:bg-purple-50 hover:text-purple-600"}`}
         >
-          Magazin
+          {lang === "ro" ? "Magazin" : "Shop"}
         </button>
         <button
           onClick={() => setActiveTab("inventory")}
           className={`flex-1 py-5 text-xl font-black transition-colors flex justify-center items-center gap-2 ${activeTab === "inventory" ? "bg-blue-100 text-blue-800 border-b-4 border-blue-500" : "text-slate-500 hover:bg-blue-50 hover:text-blue-600"}`}
         >
-          Lucrurile mele{" "}
+          {lang === "ro" ? "Lucrurile mele" : "My Stuff"}{" "}
           <span className="bg-blue-500 text-white text-sm px-3 py-1 rounded-full shadow-inner">
             {inventory.length}
           </span>
@@ -1620,7 +1731,7 @@ function ShopScreen({
           onClick={() => setActiveTab("history")}
           className={`flex-1 py-5 text-xl font-black transition-colors ${activeTab === "history" ? "bg-slate-200 text-slate-800 border-b-4 border-slate-600" : "text-slate-500 hover:bg-slate-100 hover:text-slate-700"}`}
         >
-          Istoric Puncte
+          {lang === "ro" ? "Istoric Puncte" : "Points History"}
         </button>
       </div>
 
@@ -1637,10 +1748,10 @@ function ShopScreen({
                 </div>
                 <div className="flex-1 w-full">
                   <h3 className="font-black text-xl text-slate-800">
-                    {item.name}
+                    {typeof item.name === "object" ? item.name[lang] : item.name}
                   </h3>
                   <p className="text-sm text-slate-500 mt-2 font-medium line-clamp-2">
-                    {item.description}
+                    {typeof item.description === "object" ? item.description[lang] : item.description}
                   </p>
                   <div className="mt-5 flex flex-wrap items-center justify-center sm:justify-between gap-3 w-full">
                     <span className="flex items-center gap-1 font-black text-yellow-600 bg-yellow-100 border-2 border-yellow-200 px-3 py-1.5 rounded-xl shadow-sm group-hover:animate-pop">
@@ -1655,7 +1766,7 @@ function ShopScreen({
                       disabled={points < item.cost}
                       className={`px-6 py-2.5 rounded-2xl font-black text-lg border-b-4 transition-all ${points >= item.cost ? "bg-gradient-to-b from-purple-400 to-purple-500 hover:from-purple-300 hover:to-purple-400 text-white border-purple-700 active:translate-y-1 active:border-b-0 shadow-md" : "bg-slate-200 text-slate-400 border-slate-300 cursor-not-allowed"}`}
                     >
-                      Cumpără
+                      {lang === "ro" ? "Cumpără" : "Buy"}
                     </button>
                   </div>
                 </div>
@@ -1669,9 +1780,9 @@ function ShopScreen({
             {inventory.length === 0 ? (
               <div className="text-center text-slate-500 py-12 flex flex-col items-center">
                 <AlertCircle size={48} className="text-slate-300 mb-4" />
-                <p className="text-xl font-bold">Nu ai cumpărat nimic încă.</p>
+                <p className="text-xl font-bold">{lang === "ro" ? "Nu ai cumpărat nimic încă." : "You haven't bought anything yet."}</p>
                 <p className="text-base mt-2">
-                  Rezolvă exerciții și cumpără premii din magazin!
+                  {t("shop_subtitle")}
                 </p>
               </div>
             ) : (
@@ -1685,7 +1796,7 @@ function ShopScreen({
                       {item.icon}
                     </div>
                     <span className="font-black text-slate-700 text-base leading-tight">
-                      {item.name}
+                      {typeof item.name === "object" ? item.name[lang] : item.name}
                       {item.quantity > 1 && (
                         <span className="ml-2 text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded-lg text-xs">
                           x{item.quantity}
@@ -1757,6 +1868,8 @@ function ParentDashboard({
   setView,
   petState,
   setPetState,
+  lang,
+  t
 }) {
   const [activeTab, setActiveTab] = useState("stats");
   const [newItemName, setNewItemName] = useState("");
@@ -1795,7 +1908,7 @@ function ParentDashboard({
 
     if (itemToUse.id === 6) {
       const newName = prompt(
-        "Introdu noul nume pentru prietenul tău virtual:",
+        lang === "ro" ? "Introdu noul nume pentru prietenul tău virtual:" : "Enter a new name for your virtual friend:",
         petState.name,
       );
       if (newName && newName.trim() !== "") {
@@ -1814,7 +1927,7 @@ function ParentDashboard({
       }
       return prev.filter((_, idx) => idx !== indexToRemove);
     });
-    addHistory(`Premiu folosit/revendicat: ${itemName}`, 0, "info");
+    addHistory(`${lang === "ro" ? "Premiu folosit/revendicat" : "Reward used/claimed"}: ${itemName}`, 0, "info");
   };
 
   const handleAddBonus = (e) => {
@@ -1822,9 +1935,9 @@ function ParentDashboard({
     if (!bonusPoints) return;
     const amount = parseInt(bonusPoints, 10);
     setPoints((prev) => prev + amount);
-    addHistory(`Bonus acordat de părinte`, amount, amount >= 0 ? "earn" : "spend");
+    addHistory(lang === "ro" ? `Bonus acordat de părinte` : `Parental bonus`, amount, amount >= 0 ? "earn" : "spend");
     setBonusPoints("");
-    alert(`Punctele au fost actualizate.`);
+    alert(lang === "ro" ? `Punctele au fost actualizate.` : `Points updated.`);
   };
 
   const handleAddHomework = (e) => {
@@ -1847,7 +1960,7 @@ function ParentDashboard({
     setHomework((prev) => prev.map((hw) => (hw.id === id ? { ...hw, status: "graded" } : hw)));
     if (awarded > 0) {
       setPoints((prev) => prev + awarded);
-      addHistory(`Temă corectată`, awarded, "earn");
+      addHistory(lang === "ro" ? `Temă corectată` : `Homework graded`, awarded, "earn");
     }
   };
 
@@ -1891,23 +2004,23 @@ function ParentDashboard({
       <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 p-8 text-center relative">
         <div className="relative z-10 flex justify-between items-center text-white">
           <div className="text-left">
-            <h2 className="text-white/80 text-xs font-black uppercase tracking-widest mb-1">Control Părinte</h2>
+            <h2 className="text-white/80 text-xs font-black uppercase tracking-widest mb-1">{lang === "ro" ? "Control Părinte" : "Parent Control"}</h2>
             <div className="text-white font-black text-3xl">Dashboard</div>
           </div>
           <div className="flex items-center gap-2">
             <button 
               onClick={() => setView("menu")}
               className="bg-white/20 hover:bg-white/30 p-3 rounded-2xl border border-white/30 transition-colors flex items-center gap-2 text-sm font-bold"
-              title="Ieși la Joc"
+              title={t("exit")}
             >
-              <ArrowLeft size={20} /> <span className="hidden sm:inline">Ieșire</span>
+              <ArrowLeft size={20} /> <span className="hidden sm:inline">{t("exit")}</span>
             </button>
             <button 
               onClick={() => auth.signOut()}
               className="bg-rose-500/80 hover:bg-rose-500 p-3 rounded-2xl border border-white/30 transition-colors flex items-center gap-2 text-sm font-bold"
-              title="Deconectare Cont"
+              title={t("logout")}
             >
-              <LogOut size={20} /> <span className="hidden sm:inline">Delogare</span>
+              <LogOut size={20} /> <span className="hidden sm:inline">{t("logout")}</span>
             </button>
           </div>
         </div>
@@ -1915,11 +2028,11 @@ function ParentDashboard({
 
       <div className="flex overflow-x-auto bg-slate-50 border-b-2 border-slate-200 no-scrollbar">
         {[
-          { id: "stats", label: "Statistici", icon: BarChart3 },
-          { id: "homework_manage", label: "Teme", icon: BookOpen },
-          { id: "shop_manage", label: "Magazin", icon: ShoppingCart },
-          { id: "inventory_manage", label: "Inventar", icon: Award },
-          { id: "points_manage", label: "Puncte", icon: Star },
+          { id: "stats", label: t("parent_stats"), icon: BarChart3 },
+          { id: "homework_manage", label: t("parent_homework"), icon: BookOpen },
+          { id: "shop_manage", label: t("parent_shop"), icon: ShoppingCart },
+          { id: "inventory_manage", label: t("parent_inventory"), icon: Award },
+          { id: "points_manage", label: t("parent_points"), icon: Star },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -1939,7 +2052,7 @@ function ParentDashboard({
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="bg-indigo-50 border-2 border-indigo-100 rounded-[2rem] p-6">
                 <h3 className="text-lg font-black text-indigo-900 mb-4 flex items-center gap-2 text-left">
-                  <Clock size={20} /> Timp petrecut (min)
+                  <Clock size={20} /> {lang === "ro" ? "Timp petrecut (min)" : "Time spent (min)"}
                 </h3>
                 <div className="h-[250px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
@@ -1955,7 +2068,7 @@ function ParentDashboard({
 
               <div className="bg-rose-50 border-2 border-rose-100 rounded-[2rem] p-6 text-left">
                 <h3 className="text-lg font-black text-rose-900 mb-4 flex items-center gap-2">
-                  <AlertCircle size={20} /> Greșeli frecvente
+                  <AlertCircle size={20} /> {lang === "ro" ? "Greșeli frecvente" : "Common mistakes"}
                 </h3>
                 {errorData.length > 0 ? (
                   <div className="h-[250px] w-full">
@@ -1972,7 +2085,7 @@ function ParentDashboard({
                 ) : (
                   <div className="h-[250px] flex flex-col items-center justify-center text-rose-300">
                     <Star size={48} className="mb-2 opacity-50" />
-                    <p className="font-bold">Nicio greșeală încă!</p>
+                    <p className="font-bold">{lang === "ro" ? "Nicio greșeală încă!" : "No mistakes yet!"}</p>
                   </div>
                 )}
               </div>
@@ -1984,28 +2097,28 @@ function ParentDashboard({
           <div className="space-y-8 animate-fade-in">
             <div className="bg-indigo-50 p-8 rounded-[2.5rem] border-4 border-indigo-100">
               <h3 className="font-black text-xl mb-4 flex items-center gap-2 text-indigo-900 text-left">
-                <FileText size={24} className="text-indigo-600" /> Adaugă o temă nouă
+                <FileText size={24} className="text-indigo-600" /> {lang === "ro" ? "Adaugă o temă nouă" : "Add new homework"}
               </h3>
               <form onSubmit={handleAddHomework} className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                 <div className="sm:col-span-2 text-left">
-                  <label className="block text-xs font-black text-indigo-400 uppercase tracking-widest ml-2 mb-1">Cerință</label>
-                  <input type="text" required value={newHwQuestion} onChange={(e) => setNewHwQuestion(e.target.value)} className="w-full p-4 border-2 border-indigo-200 rounded-2xl font-bold focus:border-indigo-500 outline-none" placeholder="Ex: Rezolvă pag. 42..." />
+                  <label className="block text-xs font-black text-indigo-400 uppercase tracking-widest ml-2 mb-1">{lang === "ro" ? "Cerință" : "Task"}</label>
+                  <input type="text" required value={newHwQuestion} onChange={(e) => setNewHwQuestion(e.target.value)} className="w-full p-4 border-2 border-indigo-200 rounded-2xl font-bold focus:border-indigo-500 outline-none" placeholder={lang === "ro" ? "Ex: Rezolvă pag. 42..." : "Ex: Solve page 42..."} />
                 </div>
                 <div className="text-left">
-                  <label className="block text-xs font-black text-indigo-400 uppercase tracking-widest ml-2 mb-1">Steluțe</label>
+                  <label className="block text-xs font-black text-indigo-400 uppercase tracking-widest ml-2 mb-1">{lang === "ro" ? "Steluțe" : "Stars"}</label>
                   <input type="number" required value={newHwReward} onChange={(e) => setNewHwReward(e.target.value)} className="w-full p-4 border-2 border-indigo-200 rounded-2xl font-bold focus:border-indigo-500 outline-none" placeholder="Ex: 50" />
                 </div>
                 <div className="text-left">
                   <label className="block text-xs font-black text-indigo-400 uppercase tracking-widest ml-2 mb-1">&nbsp;</label>
-                  <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-2xl shadow-[0_6px_0_0_#312e81] active:translate-y-1 active:shadow-none transition-all">Trimite</button>
+                  <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-2xl shadow-[0_6px_0_0_#312e81] active:translate-y-1 active:shadow-none transition-all">{lang === "ro" ? "Trimite" : "Send"}</button>
                 </div>
               </form>
             </div>
 
             <div className="space-y-6">
-              <h3 className="font-black text-xl text-slate-800 text-left">Teme Active și de Corectat</h3>
+              <h3 className="font-black text-xl text-slate-800 text-left">{lang === "ro" ? "Teme Active și de Corectat" : "Active Homework to Review"}</h3>
               {homework.filter(h => h.status !== 'graded').length === 0 ? (
-                <p className="text-slate-400 font-bold py-12 bg-slate-50 rounded-3xl border-4 border-dashed border-slate-200">Nu există teme în curs.</p>
+                <p className="text-slate-400 font-bold py-12 bg-slate-50 rounded-3xl border-4 border-dashed border-slate-200">{lang === "ro" ? "Nu există teme în curs." : "No homework in progress."}</p>
               ) : (
                 homework.filter(h => h.status !== 'graded').map((hw) => (
                   <div key={hw.id} className="bg-white border-4 border-slate-50 p-6 rounded-[2.5rem] shadow-sm hover:border-indigo-100 transition-colors text-left">
@@ -2017,7 +2130,7 @@ function ParentDashboard({
                              hw.status === 'answered' ? 'bg-amber-100 text-amber-600' :
                              'bg-rose-100 text-rose-600'
                            }`}>
-                             {hw.status === 'new' ? 'Trimisă' : hw.status === 'answered' ? 'De Corectat' : 'Returnată'}
+                             {hw.status === 'new' ? (lang === "ro" ? 'Trimisă' : 'Sent') : hw.status === 'answered' ? (lang === "ro" ? 'De Corectat' : 'To Review') : (lang === "ro" ? 'Returnată' : 'Returned')}
                            </span>
                            <span className="text-amber-600 font-black text-sm">{hw.reward} ⭐</span>
                         </div>
@@ -2034,19 +2147,19 @@ function ParentDashboard({
                       <div className="sm:w-64 space-y-3">
                         {hw.status === "answered" && (
                           <>
-                            <div className="text-left">
-                              <label className="block text-[10px] font-black text-slate-400 uppercase mb-1 ml-1">Scor Final</label>
-                              <input type="number" placeholder="Ex: 50" className="w-full p-2.5 border-2 border-slate-200 rounded-xl font-bold text-sm" onChange={(e) => setGradePoints({...gradePoints, [hw.id]: e.target.value})} />
-                            </div>
-                            <button onClick={() => handleGradeHomework(hw.id, hw.reward)} className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-2.5 rounded-xl shadow-[0_4px_0_0_#065f46] text-xs">Corect & Acordă</button>
-                            <div className="text-left">
-                              <label className="block text-[10px] font-black text-slate-400 uppercase mb-1 ml-1">Sfat Refacere</label>
-                              <input type="text" placeholder="Mai încearcă..." className="w-full p-2.5 border-2 border-slate-200 rounded-xl text-xs" onChange={(e) => setParentComments({...parentComments, [hw.id]: e.target.value})} />
-                            </div>
-                            <button onClick={() => handleReturnHomework(hw.id)} className="w-full bg-rose-500 hover:bg-rose-600 text-white font-black py-2.5 rounded-xl shadow-[0_4px_0_0_#9f1239] text-xs">Returnează</button>
+                             <div className="text-left">
+                               <label className="block text-[10px] font-black text-slate-400 uppercase mb-1 ml-1">{lang === "ro" ? "Scor Final" : "Final Score"}</label>
+                               <input type="number" placeholder="Ex: 50" className="w-full p-2.5 border-2 border-slate-200 rounded-xl font-bold text-sm" onChange={(e) => setGradePoints({...gradePoints, [hw.id]: e.target.value})} />
+                             </div>
+                             <button onClick={() => handleGradeHomework(hw.id, hw.reward)} className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-2.5 rounded-xl shadow-[0_4px_0_0_#065f46] text-xs">{lang === "ro" ? "Corect & Acordă" : "Grade & Award"}</button>
+                             <div className="text-left">
+                               <label className="block text-[10px] font-black text-slate-400 uppercase mb-1 ml-1">{lang === "ro" ? "Sfat Refacere" : "Review Tip"}</label>
+                               <input type="text" placeholder={lang === "ro" ? "Mai încearcă..." : "Try again..."} className="w-full p-2.5 border-2 border-slate-200 rounded-xl text-xs" onChange={(e) => setParentComments({...parentComments, [hw.id]: e.target.value})} />
+                             </div>
+                             <button onClick={() => handleReturnHomework(hw.id)} className="w-full bg-rose-500 hover:bg-rose-600 text-white font-black py-2.5 rounded-xl shadow-[0_4px_0_0_#9f1239] text-xs">{lang === "ro" ? "Returnează" : "Send Back"}</button>
                           </>
                         )}
-                        <button onClick={() => handleDeleteHomework(hw.id)} className="w-full text-slate-300 hover:text-rose-500 font-bold text-[10px] uppercase tracking-widest pt-2">Elimină Tema</button>
+                        <button onClick={() => handleDeleteHomework(hw.id)} className="w-full text-slate-300 hover:text-rose-500 font-bold text-[10px] uppercase tracking-widest pt-2">{lang === "ro" ? "Elimină Tema" : "Delete Task"}</button>
                       </div>
                     </div>
                   </div>
@@ -2059,20 +2172,20 @@ function ParentDashboard({
         {activeTab === "shop_manage" && (
           <div className="space-y-6 animate-fade-in">
             <div className="bg-purple-50 border-4 border-purple-100 p-6 rounded-[2.5rem]">
-              <h3 className="font-black text-xl mb-4 text-purple-900 text-left">Premiu Nou în Magazin</h3>
+              <h3 className="font-black text-xl mb-4 text-purple-900 text-left">{lang === "ro" ? "Premiu Nou în Magazin" : "New Shop Reward"}</h3>
               <form onSubmit={handleAddItem} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="text-left">
-                    <label className="block text-xs font-black text-purple-400 uppercase tracking-widest ml-2 mb-1">Nume Premiu</label>
-                    <input type="text" required value={newItemName} onChange={(e) => setNewItemName(e.target.value)} className="w-full p-4 border-2 border-purple-200 rounded-2xl font-bold focus:border-purple-500 outline-none" placeholder="Ex: 30 min jocuri..." />
+                    <label className="block text-xs font-black text-purple-400 uppercase tracking-widest ml-2 mb-1">{lang === "ro" ? "Nume Premiu" : "Reward Name"}</label>
+                    <input type="text" required value={newItemName} onChange={(e) => setNewItemName(e.target.value)} className="w-full p-4 border-2 border-purple-200 rounded-2xl font-bold focus:border-purple-500 outline-none" placeholder={lang === "ro" ? "Ex: 30 min jocuri..." : "Ex: 30 min games..."} />
                   </div>
                   <div className="text-left">
-                    <label className="block text-xs font-black text-purple-400 uppercase tracking-widest ml-2 mb-1">Cost Steluțe</label>
+                    <label className="block text-xs font-black text-purple-400 uppercase tracking-widest ml-2 mb-1">{lang === "ro" ? "Cost Steluțe" : "Stars Cost"}</label>
                     <input type="number" required value={newItemCost} onChange={(e) => setNewItemCost(e.target.value)} className="w-full p-4 border-2 border-purple-200 rounded-2xl font-bold focus:border-purple-500 outline-none" placeholder="Ex: 100" />
                   </div>
                 </div>
                 <div className="text-left">
-                  <label className="block text-xs font-black text-purple-400 uppercase tracking-widest ml-2 mb-2">Alege o Iconiță</label>
+                  <label className="block text-xs font-black text-purple-400 uppercase tracking-widest ml-2 mb-2">{lang === "ro" ? "Alege o Iconiță" : "Choose an Icon"}</label>
                   <div className="flex flex-wrap gap-2 p-4 bg-white border-2 border-purple-100 rounded-3xl">
                     {["🎁", "🍦", "🎮", "🧸", "🍫", "🍕", "🎞️", "⚽", "🎨", "🚲", "🍭", "📚", "🦸", "⭐", "🏆", "🏖️"].map(emoji => (
                       <button
@@ -2087,7 +2200,7 @@ function ParentDashboard({
                   </div>
                 </div>
                 <div className="text-left mt-4">
-                  <button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 text-white font-black py-4 rounded-2xl shadow-[0_6px_0_0_#581c87] active:translate-y-1 active:shadow-none transition-all">Adaugă Premiul</button>
+                  <button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 text-white font-black py-4 rounded-2xl shadow-[0_6px_0_0_#581c87] active:translate-y-1 active:shadow-none transition-all">{lang === "ro" ? "Adaugă Premiul" : "Add Reward"}</button>
                 </div>
               </form>
             </div>
@@ -2098,8 +2211,8 @@ function ParentDashboard({
                   <div className="flex items-center gap-4">
                     <span className="text-4xl bg-slate-50 p-2 rounded-2xl">{item.icon}</span>
                     <div className="text-left">
-                      <p className="font-black text-slate-800 leading-tight">{item.name}</p>
-                      <p className="text-amber-600 font-bold flex items-center gap-1 text-sm"><Star size={14} className="fill-amber-500" /> {item.cost} steluțe</p>
+                       <p className="font-black text-slate-800 leading-tight">{typeof item.name === "object" ? item.name[lang] : item.name}</p>
+                       <p className="text-amber-600 font-bold flex items-center gap-1 text-sm"><Star size={14} className="fill-amber-500" /> {item.cost} {lang === "ro" ? "steluțe" : "stars"}</p>
                     </div>
                   </div>
                   <button onClick={() => handleDeleteItem(item.id)} className="text-rose-400 hover:bg-rose-50 p-3 rounded-xl transition-colors">
@@ -2115,7 +2228,7 @@ function ParentDashboard({
           <div className="space-y-6 animate-fade-in text-left">
             <div className="bg-indigo-50 border-4 border-indigo-100 p-8 rounded-[3rem]">
               <h3 className="text-2xl font-black text-indigo-900 mb-4 flex items-center gap-2">
-                <span>🐾</span> Nume Animal Virtual
+                <span>🐾</span> {lang === "ro" ? "Nume Animal Virtual" : "Virtual Pet Name"}
               </h3>
               <div className="flex gap-3">
                 <input 
@@ -2123,32 +2236,32 @@ function ParentDashboard({
                   value={petState.name} 
                   onChange={(e) => setPetState(prev => ({ ...prev, name: e.target.value }))}
                   className="flex-1 p-4 border-2 border-indigo-200 rounded-2xl font-bold focus:border-indigo-500 outline-none shadow-sm"
-                  placeholder="Introdu nume nou..."
+                  placeholder={lang === "ro" ? "Introdu nume nou..." : "Enter new name..."}
                 />
               </div>
-              <p className="text-indigo-400 text-xs mt-3 font-bold uppercase tracking-widest ml-2">Acest nume va apărea în tot jocul copilului</p>
+              <p className="text-indigo-400 text-xs mt-3 font-bold uppercase tracking-widest ml-2">{lang === "ro" ? "Acest nume va apărea în tot jocul copilului" : "This name will appear throughout the child's game"}</p>
             </div>
 
             <div className="bg-emerald-50 border-4 border-emerald-100 p-8 rounded-[3rem]">
-              <h3 className="text-2xl font-black text-emerald-900 mb-2">Recompensele Copilului</h3>
-              <p className="text-emerald-700 font-medium mb-8 italic">Aici poți vedea ce a cumpărat copilul. După ce îi oferi premiul în realitate, apasă butonul de mai jos.</p>
+              <h3 className="text-2xl font-black text-emerald-900 mb-2">{lang === "ro" ? "Recompensele Copilului" : "Child's Rewards"}</h3>
+              <p className="text-emerald-700 font-medium mb-8 italic">{lang === "ro" ? "Aici poți vedea ce a cumpărat copilul. După ce îi oferi premiul în realitate, apasă butonul de mai jos." : "Here you can see what the child bought. After you give them the reward in real life, press the button below."}</p>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {inventory.length === 0 ? (
-                  <p className="col-span-full py-12 text-center text-slate-400 font-bold bg-white/50 rounded-3xl border-4 border-dashed border-emerald-100">Nicio recompensă de revendicat momentan.</p>
+                  <p className="col-span-full py-12 text-center text-slate-400 font-bold bg-white/50 rounded-3xl border-4 border-dashed border-emerald-100">{lang === "ro" ? "Nicio recompensă de revendicat momentan." : "No rewards to claim currently."}</p>
                 ) : (
                   inventory.map((item, idx) => (
                     <div key={idx} className="bg-white p-5 rounded-[2.5rem] border-4 border-emerald-50 flex items-center justify-between shadow-sm">
                       <div className="flex items-center gap-4">
                         <span className="text-4xl">{item.icon}</span>
                         <div className="flex flex-col">
-                          <span className="font-black text-slate-800 leading-tight">{item.name}</span>
+                          <span className="font-black text-slate-800 leading-tight">{typeof item.name === "object" ? item.name[lang] : item.name}</span>
                           {item.quantity > 1 && (
-                            <span className="text-xs font-bold text-indigo-500">Cantitate: {item.quantity}</span>
+                            <span className="text-xs font-bold text-indigo-500">{lang === "ro" ? "Cantitate" : "Quantity"}: {item.quantity}</span>
                           )}
                         </div>
                       </div>
-                      <button onClick={() => handleUseInventoryItem(idx, item.name)} className="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-2xl font-black shadow-[0_4px_0_0_#065f46] text-sm">Folosit</button>
+                      <button onClick={() => handleUseInventoryItem(idx, item.name)} className="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-2xl font-black shadow-[0_4px_0_0_#065f46] text-sm">{lang === "ro" ? "Folosit" : "Used"}</button>
                     </div>
                   ))
                 )}
@@ -2160,18 +2273,18 @@ function ParentDashboard({
         {activeTab === "points_manage" && (
           <div className="max-w-md mx-auto space-y-8 animate-fade-in">
             <div className="bg-amber-50 border-4 border-amber-100 p-10 rounded-[4rem] shadow-sm text-center">
-              <h3 className="text-2xl font-black text-amber-900 mb-8 text-center">Gestionează Punctele</h3>
+              <h3 className="text-2xl font-black text-amber-900 mb-8 text-center">{lang === "ro" ? "Gestionează Punctele" : "Manage Points"}</h3>
               <div className="bg-white p-8 rounded-[2.5rem] shadow-inner border-2 border-amber-100 mb-8 text-center">
                 <Star size={48} className="text-amber-500 fill-amber-500 mx-auto mb-3 animate-pulse" />
                 <p className="text-5xl font-black text-slate-800 text-center">{points}</p>
-                <p className="text-slate-400 font-bold uppercase tracking-widest text-xs mt-1 text-center">Steluțe curente</p>
+                <p className="text-slate-400 font-bold uppercase tracking-widest text-xs mt-1 text-center">{lang === "ro" ? "Steluțe curente" : "Current stars"}</p>
               </div>
               <form onSubmit={handleAddBonus} className="space-y-4">
                 <div className="text-left">
-                  <label className="block text-xs font-black text-amber-600 uppercase tracking-widest ml-4 mb-1">Adaugă sau Scade</label>
+                  <label className="block text-xs font-black text-amber-600 uppercase tracking-widest ml-4 mb-1">{lang === "ro" ? "Adaugă sau Scade" : "Add or Subtract"}</label>
                   <input type="number" required value={bonusPoints} onChange={(e) => setBonusPoints(e.target.value)} className="w-full p-5 border-4 border-amber-100 rounded-[2rem] text-center text-3xl font-black focus:border-amber-400 outline-none shadow-sm" placeholder="+ / - 50" />
                 </div>
-                <button type="submit" className="w-full bg-amber-500 hover:bg-amber-600 text-white font-black py-5 rounded-[2rem] shadow-[0_8px_0_0_#92400e] active:translate-y-1 active:shadow-none transition-all text-xl">Actualizează Portofelul</button>
+                <button type="submit" className="w-full bg-amber-500 hover:bg-amber-600 text-white font-black py-5 rounded-[2rem] shadow-[0_8px_0_0_#92400e] active:translate-y-1 active:shadow-none transition-all text-xl">{lang === "ro" ? "Actualizează Portofelul" : "Update Wallet"}</button>
               </form>
             </div>
           </div>
@@ -2185,18 +2298,18 @@ function ParentDashboard({
 // ECRANE SECURITATE PIN
 // ==========================================
 
-function PinSetupScreen({ setParentPin }) {
+function PinSetupScreen({ setParentPin, lang }) {
   const [pin, setPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
   const [error, setError] = useState("");
 
   const handleSave = () => {
     if (pin.length !== 4) {
-      setError("PIN-ul trebuie să aibă 4 cifre!");
+      setError(lang === "ro" ? "PIN-ul trebuie să aibă 4 cifre!" : "PIN must be 4 digits!");
       return;
     }
     if (pin !== confirmPin) {
-      setError("PIN-urile nu coincid!");
+      setError(lang === "ro" ? "PIN-urile nu coincid!" : "PINs do not match!");
       return;
     }
     setParentPin(pin);
@@ -2207,8 +2320,8 @@ function PinSetupScreen({ setParentPin }) {
       <div className="bg-white rounded-[3rem] p-8 max-w-sm w-full text-center shadow-2xl border-8 border-amber-400 animate-fade-in relative overflow-hidden">
         <div className="absolute -top-10 -right-10 text-9xl opacity-10 rotate-12 pointer-events-none">😼</div>
         <div className="text-6xl mb-4 drop-shadow-md">🔐</div>
-        <h2 className="text-3xl font-black text-indigo-900 mb-2">Setează PIN Părinte</h2>
-        <p className="text-slate-500 mb-6 font-bold leading-tight">Acest cod va fi necesar pentru a intra în Zona Părinților.</p>
+        <h2 className="text-3xl font-black text-indigo-900 mb-2">{lang === "ro" ? "Setează PIN Părinte" : "Set Parent PIN"}</h2>
+        <p className="text-slate-500 mb-6 font-bold leading-tight">{lang === "ro" ? "Acest cod va fi necesar pentru a intra în Zona Părinților." : "This code will be required to enter the Parent Zone."}</p>
         
         {error && <div className="bg-red-50 text-red-600 p-3 rounded-2xl mb-4 font-black border-2 border-red-200 animate-wiggle">{error}</div>}
         
@@ -2217,7 +2330,7 @@ function PinSetupScreen({ setParentPin }) {
             type="password" 
             maxLength={4} 
             inputMode="numeric"
-            placeholder="PIN nou (4 cifre)" 
+            placeholder={lang === "ro" ? "PIN nou (4 cifre)" : "New PIN (4 digits)"}
             value={pin}
             onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
             className="w-full text-center text-3xl p-4 border-4 border-indigo-50 rounded-2xl focus:border-amber-400 outline-none font-black tracking-[0.5em] shadow-inner transition-colors"
@@ -2226,7 +2339,7 @@ function PinSetupScreen({ setParentPin }) {
             type="password" 
             maxLength={4} 
             inputMode="numeric"
-            placeholder="Confirmă PIN" 
+            placeholder={lang === "ro" ? "Confirmă PIN" : "Confirm PIN"}
             value={confirmPin}
             onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, ""))}
             className="w-full text-center text-3xl p-4 border-4 border-indigo-50 rounded-2xl focus:border-amber-400 outline-none font-black tracking-[0.5em] shadow-inner transition-colors"
@@ -2235,7 +2348,7 @@ function PinSetupScreen({ setParentPin }) {
             onClick={handleSave}
             className="w-full bg-gradient-to-b from-amber-400 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-white font-black py-4 rounded-2xl shadow-[0_8px_0_0_#92400e] active:translate-y-1 active:shadow-none transition-all text-xl mt-4 border-t-2 border-amber-200"
           >
-            Salvează PIN-ul
+            {lang === "ro" ? "Salvează PIN-ul" : "Save PIN"}
           </button>
         </div>
       </div>
@@ -2243,7 +2356,7 @@ function PinSetupScreen({ setParentPin }) {
   );
 }
 
-function PinEntryScreen({ correctPin, onCorrect, onCancel, onForgotPin, userEmail, uid }) {
+function PinEntryScreen({ correctPin, onCorrect, onCancel, onForgotPin, userEmail, uid, lang }) {
   const [input, setInput] = useState("");
   const [isError, setIsError] = useState(false);
 
@@ -2274,8 +2387,8 @@ function PinEntryScreen({ correctPin, onCorrect, onCancel, onForgotPin, userEmai
   return (
     <div className="bg-white/95 backdrop-blur-md rounded-[3rem] shadow-2xl border-4 border-white overflow-hidden mt-6 relative z-10 max-w-md mx-auto animate-fade-in p-8 text-center border-b-[12px] border-indigo-100">
       <div className="text-5xl mb-3">🐱</div>
-      <h2 className="text-3xl font-black text-indigo-950 mb-2">Acces Securizat</h2>
-      <p className="text-slate-500 mb-8 font-bold">Introdu codul PIN pentru părinți</p>
+      <h2 className="text-3xl font-black text-indigo-950 mb-2">{lang === "ro" ? "Acces Securizat" : "Secure Access"}</h2>
+      <p className="text-slate-500 mb-8 font-bold">{lang === "ro" ? "Introdu codul PIN pentru părinți" : "Enter the parent PIN code"}</p>
       
       <div className={`flex justify-center gap-5 mb-10 ${isError ? 'animate-wiggle' : ''}`}>
         {[0, 1, 2, 3].map((i) => (
