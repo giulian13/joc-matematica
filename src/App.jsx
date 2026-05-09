@@ -23,6 +23,8 @@ import {
   PieChart as PieChartIcon,
   Clock,
   Delete,
+  LogOut,
+  ArrowLeft,
 } from "lucide-react";
 import {
   BarChart,
@@ -869,6 +871,7 @@ export default function App() {
             homework={homework}
             setHomework={setHomework}
             analytics={analytics}
+            setView={setView}
           />
         )}
         {view === "pin_entry" && (
@@ -1618,6 +1621,7 @@ function ParentDashboard({
   homework,
   setHomework,
   analytics,
+  setView,
 }) {
   const [activeTab, setActiveTab] = useState("stats");
   const [newItemName, setNewItemName] = useState("");
@@ -1733,7 +1737,22 @@ function ParentDashboard({
             <h2 className="text-white/80 text-xs font-black uppercase tracking-widest mb-1">Control Părinte</h2>
             <div className="text-white font-black text-3xl">Dashboard</div>
           </div>
-          <Settings size={32} className="animate-spin-slow opacity-50" />
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => setView("menu")}
+              className="bg-white/20 hover:bg-white/30 p-3 rounded-2xl border border-white/30 transition-colors flex items-center gap-2 text-sm font-bold"
+              title="Ieși la Joc"
+            >
+              <ArrowLeft size={20} /> <span className="hidden sm:inline">Ieșire</span>
+            </button>
+            <button 
+              onClick={() => auth.signOut()}
+              className="bg-rose-500/80 hover:bg-rose-500 p-3 rounded-2xl border border-white/30 transition-colors flex items-center gap-2 text-sm font-bold"
+              title="Deconectare Cont"
+            >
+              <LogOut size={20} /> <span className="hidden sm:inline">Delogare</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1962,12 +1981,12 @@ function ParentDashboard({
 
         {activeTab === "points_manage" && (
           <div className="max-w-md mx-auto space-y-8 animate-fade-in">
-            <div className="bg-amber-50 border-4 border-amber-100 p-10 rounded-[4rem] shadow-sm">
-              <h3 className="text-2xl font-black text-amber-900 mb-8">Gestionează Punctele</h3>
-              <div className="bg-white p-8 rounded-[2.5rem] shadow-inner border-2 border-amber-100 mb-8">
+            <div className="bg-amber-50 border-4 border-amber-100 p-10 rounded-[4rem] shadow-sm text-center">
+              <h3 className="text-2xl font-black text-amber-900 mb-8 text-center">Gestionează Punctele</h3>
+              <div className="bg-white p-8 rounded-[2.5rem] shadow-inner border-2 border-amber-100 mb-8 text-center">
                 <Star size={48} className="text-amber-500 fill-amber-500 mx-auto mb-3 animate-pulse" />
-                <p className="text-5xl font-black text-slate-800">{points}</p>
-                <p className="text-slate-400 font-bold uppercase tracking-widest text-xs mt-1">Steluțe curente</p>
+                <p className="text-5xl font-black text-slate-800 text-center">{points}</p>
+                <p className="text-slate-400 font-bold uppercase tracking-widest text-xs mt-1 text-center">Steluțe curente</p>
               </div>
               <form onSubmit={handleAddBonus} className="space-y-4">
                 <div className="text-left">
