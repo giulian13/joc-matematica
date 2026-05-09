@@ -17,7 +17,10 @@ import {
   CheckCircle2,
   BookOpen,
   FileText,
+  Map as MapIcon,
+  Unlock,
 } from "lucide-react";
+import confetti from "canvas-confetti";
 
 // ==========================================
 // 🚀 ZONA FIREBASE (BAZA DE DATE)
@@ -131,7 +134,7 @@ function AuthScreen() {
     } catch (err) {
       setError(
         err.message.includes("auth/")
-          ? "Email sau parolă incorectă / invalidă."
+          ? "Adresa de email sau parola este incorectă."
           : err.message,
       );
     } finally {
@@ -284,7 +287,7 @@ function AuthScreen() {
             disabled={loading}
             className="w-full bg-slate-200 hover:bg-slate-300 text-slate-600 font-black py-4 rounded-2xl transition-all border-4 border-slate-300 active:translate-y-1 active:border-b-0"
           >
-            Joacă ca Vizitator (Fără cont)
+            Intră ca Vizitator (Fără cont)
           </button>
           <p className="text-xs text-slate-400 font-bold mt-3">
             Vizitatorii salvează progresul doar pe acest dispozitiv.
@@ -302,6 +305,9 @@ export default function App() {
   const [inventory, setInventory] = useState([]);
   const [shopItems, setShopItems] = useState(INITIAL_SHOP_ITEMS);
   const [homework, setHomework] = useState([]);
+  const [maxLevel, setMaxLevel] = useState(1);
+  const [levelProgress, setLevelProgress] = useState(0);
+  const [currentPlayingLevel, setCurrentPlayingLevel] = useState(1);
 
   // Stări pentru Firebase
   const [user, setUser] = useState(null);
@@ -369,12 +375,16 @@ export default function App() {
             setInventory(data.inventory ?? []);
             setShopItems(data.shopItems ?? INITIAL_SHOP_ITEMS);
             setHomework(data.homework ?? []);
+            setMaxLevel(data.maxLevel ?? 1);
+            setLevelProgress(data.levelProgress ?? 0);
           } else {
             setPoints(0);
             setHistory([]);
             setInventory([]);
             setShopItems(INITIAL_SHOP_ITEMS);
             setHomework([]);
+            setMaxLevel(1);
+            setLevelProgress(0);
           }
           isDataLoaded.current = true;
           setDbLoading(false);
@@ -404,13 +414,13 @@ export default function App() {
       );
       setDoc(
         docRef,
-        { points, history, inventory, shopItems, homework },
+        { points, history, inventory, shopItems, homework, maxLevel, levelProgress },
         { merge: true },
       ).catch((err) => console.error("Eroare Firebase la salvare:", err));
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [points, history, inventory, shopItems, homework, user]);
+  }, [points, history, inventory, shopItems, homework, maxLevel, levelProgress, user]);
 
   const addHistory = (message, amount, type = "earn") => {
     const timestamp = new Date().toLocaleTimeString("ro-RO", {
@@ -515,8 +525,24 @@ export default function App() {
 
       <main className="max-w-4xl mx-auto p-4 py-8">
         {view === "menu" && <MainMenu setView={setView} />}
+        {view === "map" && (
+          <MapScreen
+            setView={setView}
+            maxLevel={maxLevel}
+            setCurrentPlayingLevel={setCurrentPlayingLevel}
+          />
+        )}
         {view === "game" && (
-          <GameScreen setPoints={setPoints} addHistory={addHistory} />
+          <GameScreen
+            setPoints={setPoints}
+            addHistory={addHistory}
+            currentPlayingLevel={currentPlayingLevel}
+            maxLevel={maxLevel}
+            setMaxLevel={setMaxLevel}
+            levelProgress={levelProgress}
+            setLevelProgress={setLevelProgress}
+            setView={setView}
+          />
         )}
         {view === "homework" && (
           <HomeworkScreen homework={homework} setHomework={setHomework} />
@@ -576,7 +602,7 @@ function MainMenu({ setView }) {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full max-w-4xl mt-12">
         <button
-          onClick={() => setView("game")}
+          onClick={() => setView("map")}
           className="flex flex-col items-center p-8 bg-gradient-to-b from-emerald-500 to-teal-700 border-4 border-emerald-300 rounded-[2.5rem] transition-all shadow-[0_12px_0_0_#042f2e] hover:shadow-[0_18px_0_0_#042f2e] hover:-translate-y-2 active:translate-y-3 active:shadow-none group relative overflow-hidden"
         >
           <div className="absolute top-0 right-0 p-4 opacity-20 text-6xl group-hover:rotate-45 transition-transform duration-500">
@@ -760,9 +786,77 @@ function HomeworkScreen({ homework, setHomework }) {
 }
 
 // ==========================================
+// HARTA AVENTURII
+// ==========================================
+const LEVELS = [
+  { id: 1, name: "Poiana Însorită", icon: "🌻", description: "Începutul aventurii" },
+  { id: 2, name: "Pădurea de Basm", icon: "🌲", description: "Printre copaci fermecați" },
+  { id: 3, name: "Peștera Cristalelor", icon: "💎", description: "Scântei în întuneric" },
+  { id: 4, name: "Castelul Norilor", icon: "🏰", description: "Acolo sus pe cer" },
+  { id: 5, name: "Tărâmul Magic", icon: "✨", description: "Cea mai mare provocare" },
+];
+
+function MapScreen({ setView, maxLevel, setCurrentPlayingLevel }) {
+  return (
+    <div className="flex flex-col items-center justify-center space-y-8 animate-fade-in mt-6 relative z-10 max-w-2xl mx-auto">
+      <div className="text-center mb-8">
+        <h2 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-b from-amber-100 to-amber-400 drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)] pb-2">
+          Harta Aventurii
+        </h2>
+        <p className="text-xl text-indigo-100 font-bold bg-indigo-950/60 p-4 rounded-3xl backdrop-blur-md mt-4 border-2 border-indigo-500/50 shadow-2xl">
+          Alege un nivel pentru a continua povestea!
+        </p>
+      </div>
+
+      <div className="w-full space-y-6 relative before:absolute before:inset-0 before:ml-[50%] before:-translate-x-1/2 before:w-2 before:bg-indigo-900/50 before:rounded-full before:-z-10 pb-10">
+        {LEVELS.map((level, index) => {
+          const isUnlocked = level.id <= maxLevel;
+          return (
+            <div key={level.id} className={`flex items-center gap-4 ${index % 2 === 0 ? 'flex-row' : 'flex-row-reverse'}`}>
+              <div className="w-1/2 flex justify-end">
+                {index % 2 === 0 && (
+                  <div className={`p-4 rounded-2xl text-right ${isUnlocked ? 'bg-white/90 shadow-xl' : 'bg-slate-800/80 text-slate-400'} border-4 ${isUnlocked ? 'border-amber-400' : 'border-slate-700'}`}>
+                    <h3 className="font-black text-lg">{level.name}</h3>
+                    <p className="text-sm font-medium hidden sm:block">{level.description}</p>
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={() => {
+                  if (isUnlocked) {
+                    setCurrentPlayingLevel(level.id);
+                    setView("game");
+                  }
+                }}
+                className={`relative shrink-0 w-20 h-20 rounded-full border-4 flex items-center justify-center text-3xl shadow-xl transition-transform ${isUnlocked ? 'bg-gradient-to-br from-amber-300 to-orange-500 border-white hover:scale-110 active:scale-95 z-10 cursor-pointer' : 'bg-slate-700 border-slate-500 opacity-80 cursor-not-allowed'}`}
+              >
+                {isUnlocked ? level.icon : <Lock size={28} className="text-slate-400" />}
+              </button>
+
+              <div className="w-1/2 flex justify-start">
+                {index % 2 !== 0 && (
+                  <div className={`p-4 rounded-2xl text-left ${isUnlocked ? 'bg-white/90 shadow-xl' : 'bg-slate-800/80 text-slate-400'} border-4 ${isUnlocked ? 'border-amber-400' : 'border-slate-700'}`}>
+                    <h3 className="font-black text-lg">{level.name}</h3>
+                    <p className="text-sm font-medium hidden sm:block">{level.description}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <button onClick={() => setView("menu")} className="mt-8 px-6 py-3 bg-indigo-800 hover:bg-indigo-700 text-white font-bold rounded-2xl transition-colors border-2 border-indigo-400">
+        Înapoi la Meniu
+      </button>
+    </div>
+  );
+}
+
+// ==========================================
 // ECRANUL DE JOC (LOGICA MATEMATICĂ)
 // ==========================================
-function GameScreen({ setPoints, addHistory }) {
+function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setMaxLevel, levelProgress, setLevelProgress, setView }) {
   const [problem, setProblem] = useState(null);
   const [answer, setAnswer] = useState("");
   const [feedback, setFeedback] = useState(null);
@@ -863,16 +957,44 @@ function GameScreen({ setPoints, addHistory }) {
     const numAnswer = parseInt(answer, 10);
 
     if (numAnswer === problem.answer) {
-      setFeedback({
-        type: "success",
-        message: `Ai primit ${problem.reward} comori.`,
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 }
       });
+
       setPoints((prev) => prev + problem.reward);
       addHistory(
         `Provocare completată: ${problem.text} = ${problem.answer}`,
         problem.reward,
         "earn",
       );
+
+      const newProgress = levelProgress + 1;
+      if (newProgress >= 5) {
+        if (currentPlayingLevel === maxLevel && maxLevel < 5) {
+          setMaxLevel(maxLevel + 1);
+          setFeedback({
+            type: "success",
+            message: `Ai primit ${problem.reward} comori. Ai deblocat nivelul următor! 🎉`,
+          });
+          setTimeout(() => {
+            confetti({ particleCount: 300, spread: 100, origin: { y: 0.3 } });
+          }, 500);
+        } else {
+          setFeedback({
+            type: "success",
+            message: `Ai primit ${problem.reward} comori. Ai completat nivelul!`,
+          });
+        }
+        setLevelProgress(0);
+      } else {
+        setLevelProgress(newProgress);
+        setFeedback({
+          type: "success",
+          message: `Corect! Ai primit ${problem.reward} comori. (Progres: ${newProgress}/5)`,
+        });
+      }
 
       setTimeout(() => {
         generateProblem();
@@ -901,10 +1023,16 @@ function GameScreen({ setPoints, addHistory }) {
           <div className="absolute inset-0 bg-magic-pattern opacity-20"></div>
 
           <div className="relative z-10">
-            <div className="inline-block bg-amber-900/50 px-6 py-2 rounded-full mb-6 border border-amber-500/30">
-              <h2 className="text-amber-200 text-sm font-black uppercase tracking-[0.3em] drop-shadow-sm flex items-center gap-2">
-                <span>🐾</span> Provocarea Pisicii <span>🐾</span>
-              </h2>
+            <div className="flex justify-between items-center mb-6">
+              <button onClick={() => setView("map")} className="text-amber-200 hover:text-white bg-amber-900/50 p-2 rounded-full border border-amber-500/30 transition-colors">
+                <MapIcon size={24} />
+              </button>
+              <div className="inline-block bg-amber-900/50 px-6 py-2 rounded-full border border-amber-500/30">
+                <h2 className="text-amber-200 text-sm font-black uppercase tracking-[0.3em] drop-shadow-sm flex items-center gap-2">
+                  <span>🐾</span> Nivel {currentPlayingLevel} <span>🐾</span>
+                </h2>
+              </div>
+              <div className="w-10"></div>
             </div>
 
             <div className="text-amber-50 font-black drop-shadow-[0_5px_10px_rgba(0,0,0,0.6)] tracking-wider transition-all duration-500 text-7xl animate-float">
@@ -1495,7 +1623,7 @@ function ParentDashboard({
 
             <div>
               <h3 className="font-bold text-lg mb-4 text-slate-800">
-                Teme în Așteptare (Ne-rezolvate sau întoarse la copil)
+                Teme în Așteptare (Nerezolvate sau întoarse la copil)
               </h3>
               <div className="space-y-2">
                 {homework.filter(

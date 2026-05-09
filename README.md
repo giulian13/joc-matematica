@@ -1,23 +1,24 @@
-# Joc Matematică (Math Game)
+# Aventura Pisicilor - Joc Matematică
 
-A fun and interactive math game built with React, Vite, and Tailwind CSS. This application uses Google's Gemini AI to generate engaging math problems and provide educational content in Romanian.
+A fun and interactive math game built with React, Vite, and Tailwind CSS. This application provides engaging math problems and educational content in Romanian.
 
 ## Features
 
-- 🎮 Interactive math challenges
-- 🤖 AI-powered problem generation using Gemini API
+- 🎮 Interactive math challenges and levels
+- 🗺️ Adventure map with progression system
 - 📊 Progress tracking and history
-- 🏆 Achievement system with awards
+- 🏆 Achievement system with awards and virtual shop
+- 👨‍👩‍👧‍👦 Parent dashboard to manage tasks and rewards
 - 🎨 Modern UI with Tailwind CSS
 - ⚡ Fast development with Vite
-- 🔒 Secure API key management via environment variables
+- 📱 Progressive Web App (PWA) support
 
 ## Technologies Used
 
 - **Frontend**: React 19, Vite
 - **Styling**: Tailwind CSS v4
 - **Icons**: Lucide React
-- **AI**: Google Gemini API
+- **Database**: Firebase
 - **Build Tools**: ESLint, PostCSS, Autoprefixer
 
 ## Installation
@@ -35,11 +36,8 @@ A fun and interactive math game built with React, Vite, and Tailwind CSS. This a
    npm install
    ```
 
-3. Create a `.env` file in the root directory and add your Gemini API key:
-
-   ```
-   VITE_GEMINI_API_KEY=your_api_key_here
-   ```
+3. Setup Firebase:
+   Update the `getFirebaseConfig` function in `src/App.jsx` or provide the necessary `VITE_FIREBASE_*` environment variables.
 
 4. Start the development server:
    ```bash
@@ -76,4 +74,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - Built with [Vite](https://vitejs.dev/)
 - Styled with [Tailwind CSS](https://tailwindcss.com/)
-- Powered by [Google Gemini AI](https://ai.google.dev/)
