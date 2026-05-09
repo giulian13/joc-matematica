@@ -36,6 +36,7 @@ import {
   signOut,
   GoogleAuthProvider,
   signInWithPopup,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 import { getFirestore, doc, setDoc, onSnapshot } from "firebase/firestore";
 
@@ -505,6 +506,7 @@ export default function App() {
   const [currentPlayingLevel, setCurrentPlayingLevel] = useState(1);
   const [petState, setPetState] = useState({ food: 100, joy: 100, energy: 100, lastInteraction: Date.now() });
   const [parentPin, setParentPin] = useState(null);
+  const [resetPinRequested, setResetPinRequested] = useState(false);
 
   // Stări pentru Firebase
   const [user, setUser] = useState(null);
@@ -575,6 +577,13 @@ export default function App() {
             setMaxLevel(data.maxLevel ?? 1);
             setLevelProgress(data.levelProgress ?? 0);
             setParentPin(data.parentPin ?? null);
+            setResetPinRequested(data.resetPinRequested ?? false);
+
+            if (data.resetPinRequested) {
+              setParentPin(null);
+              setResetPinRequested(false);
+              // Actualizarea în Firebase se va face prin useEffect-ul de salvare
+            }
             
             let loadedPet = data.petState ?? { food: 100, joy: 100, energy: 100, lastInteraction: Date.now() };
             const now = Date.now();
@@ -635,13 +644,13 @@ export default function App() {
       );
       setDoc(
         docRef,
-        { points, history, inventory, shopItems, homework, maxLevel, levelProgress, petState, parentPin },
+        { points, history, inventory, shopItems, homework, maxLevel, levelProgress, petState, parentPin, resetPinRequested },
         { merge: true },
       ).catch((err) => console.error("Eroare Firebase la salvare:", err));
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [points, history, inventory, shopItems, homework, maxLevel, levelProgress, petState, user, parentPin]);
+  }, [points, history, inventory, shopItems, homework, maxLevel, levelProgress, petState, user, parentPin, resetPinRequested]);
 
   const addHistory = (message, amount, type = "earn") => {
     const timestamp = new Date().toLocaleTimeString("ro-RO", {
@@ -813,6 +822,19 @@ export default function App() {
             correctPin={parentPin}
             onCorrect={() => setView("parent")}
             onCancel={() => setView("menu")}
+            userEmail={user?.email}
+            onForgotPin={async () => {
+              if (window.confirm("Vrei să resetezi PIN-ul? Vei primi un email de resetare a parolei și vei fi deconectat pentru siguranță.")) {
+                try {
+                  await sendPasswordResetEmail(auth, user.email);
+                  setResetPinRequested(true);
+                  // Așteptăm puțin pentru a ne asigura că flag-ul e trimis spre Firebase înainte de logout
+                  setTimeout(() => signOut(auth), 1000);
+                } catch (err) {
+                  alert("Eroare: " + err.message);
+                }
+              }
+            }}
           />
         )}
       </main>
@@ -2195,7 +2217,7 @@ function PinSetupScreen({ setParentPin }) {
   );
 }
 
-function PinEntryScreen({ correctPin, onCorrect, onCancel }) {
+function PinEntryScreen({ correctPin, onCorrect, onCancel, onForgotPin, userEmail }) {
   const [input, setInput] = useState("");
   const [isError, setIsError] = useState(false);
 
@@ -2258,9 +2280,17 @@ function PinEntryScreen({ correctPin, onCorrect, onCancel }) {
         </button>
       </div>
 
-      <button onClick={onCancel} className="text-slate-400 font-bold hover:text-indigo-600 transition-colors uppercase tracking-widest text-sm">
-        Înapoi la aventură
-      </button>
+      <div className="flex flex-col gap-4">
+        <button onClick={onCancel} className="text-slate-400 font-bold hover:text-indigo-600 transition-colors uppercase tracking-widest text-sm">
+          Înapoi la aventură
+        </button>
+        
+        {userEmail && (
+          <button onClick={onForgotPin} className="text-xs text-slate-300 hover:text-red-400 transition-colors font-medium">
+            Am uitat PIN-ul (Resetează via Email)
+          </button>
+        )}
+      </div>
     </div>
   );
 }
