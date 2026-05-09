@@ -25,6 +25,7 @@ import {
   Delete,
   LogOut,
   ArrowLeft,
+  Gem,
 } from "lucide-react";
 import {
   BarChart,
@@ -922,17 +923,54 @@ export default function App() {
       {/* Overlay pentru a păstra tema culorilor și a îmbunătăți lizibilitatea */}
       <div className={`fixed inset-0 bg-gradient-to-b ${currentBg} opacity-50 pointer-events-none transition-colors duration-[2000ms] z-0`}></div>
       <style>{`
-        @keyframes float { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-20px) rotate(10deg); } }
-        @keyframes float-delay { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-25px) rotate(-15deg); } }
+        @keyframes float { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-20px) rotate(5deg); } }
+        @keyframes float-delay { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-15px) rotate(-5deg); } }
         @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 20px rgba(251, 191, 36, 0.4); } 50% { box-shadow: 0 0 40px rgba(251, 191, 36, 0.8); } }
-        @keyframes wiggle { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+        @keyframes wiggle { 0%, 100% { transform: rotate(-1deg); } 50% { transform: rotate(1deg); } }
         @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
         .animate-float { animation: float 6s ease-in-out infinite; }
         .animate-float-delay { animation: float-delay 7s ease-in-out infinite; animation-delay: 2s; }
         .animate-pulse-glow { animation: pulse-glow 3s infinite; }
-        .animate-wiggle { animation: wiggle 2s ease-in-out infinite; }
+        .animate-wiggle { animation: wiggle 4s ease-in-out infinite; }
         .animate-pop { animation: pop 0.3s ease-in-out; }
         .bg-magic-pattern { background-image: radial-gradient(circle at 15px 15px, rgba(255,255,255,0.1) 2px, transparent 0); background-size: 30px 30px; }
+        
+        .glossy-button {
+          position: relative;
+          overflow: hidden;
+          transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          box-shadow: 
+            0 12px 0 0 rgba(0,0,0,0.25), 
+            inset 0 -12px 20px rgba(0,0,0,0.3), 
+            inset 0 12px 20px rgba(255,255,255,0.5),
+            0 20px 40px rgba(0,0,0,0.3);
+          border: 4px solid rgba(255,255,255,0.2);
+        }
+        .glossy-button:active {
+          transform: translateY(10px);
+          box-shadow: 0 2px 0 0 rgba(0,0,0,0.2), inset 0 -6px 10px rgba(0,0,0,0.3), inset 0 6px 10px rgba(255,255,255,0.4);
+        }
+        .glossy-button::before {
+          content: '';
+          position: absolute;
+          top: 3%;
+          left: 10%;
+          width: 80%;
+          height: 40%;
+          background: linear-gradient(to bottom, rgba(255,255,255,0.7), rgba(255,255,255,0.1) 80%, transparent);
+          border-radius: 50% 50% 45% 45% / 100% 100% 20% 20%;
+          pointer-events: none;
+          z-index: 2;
+        }
+        .glossy-button::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+          opacity: 0.12;
+          mix-blend-mode: overlay;
+          pointer-events: none;
+        }
       `}</style>
 
       {/* Fundal animat de poveste cu elemente de pisici */}
@@ -957,34 +995,31 @@ export default function App() {
         </div>
       </div>
 
-      <header className="bg-indigo-950/80 backdrop-blur-md shadow-[0_4px_30px_rgba(0,0,0,0.5)] p-4 sticky top-0 z-20 border-b-4 border-amber-500/50">
-        <div className="max-w-4xl mx-auto flex justify-between items-center">
+      <header className="bg-indigo-950/90 backdrop-blur-xl shadow-2xl p-3 sticky top-0 z-[100] border-b-2 border-indigo-400/20">
+        <div className="max-w-5xl mx-auto flex justify-between items-center">
           <div
             className="flex items-center gap-3 cursor-pointer group"
             onClick={() => setView("menu")}
           >
-            <div className="bg-gradient-to-br from-amber-400 to-orange-500 p-2.5 rounded-2xl shadow-lg group-hover:scale-110 transition-transform">
-              <span className="text-2xl drop-shadow-md">🐱</span>
+            <div className="bg-amber-400 p-2 rounded-xl shadow-lg group-hover:scale-105 transition-transform">
+              <span className="text-xl drop-shadow-md">🐱</span>
             </div>
-            <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-orange-400 tracking-tight hidden sm:block drop-shadow-sm">
+            <h1 className="text-xl font-black text-amber-500 tracking-tight hidden sm:block drop-shadow-sm">
               {t("app_title")}
-            </h1>
-            <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-orange-400 tracking-tight sm:hidden drop-shadow-sm">
-              {t("app_title_short")}
             </h1>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-4">
-            <div className="flex items-center gap-1 bg-indigo-900/50 p-1 rounded-xl border border-indigo-500/30">
+          <div className="flex items-center gap-3 sm:gap-6">
+            <div className="flex items-center gap-0.5 bg-indigo-900/60 p-1 rounded-xl border border-indigo-500/30">
               <button 
                 onClick={() => setLang("ro")} 
-                className={`px-2 py-1 rounded-lg text-[10px] font-black transition-all ${lang === 'ro' ? 'bg-amber-400 text-amber-950 shadow-md' : 'text-indigo-200 hover:text-white'}`}
+                className={`px-3 py-1 rounded-lg text-[11px] font-black transition-all ${lang === 'ro' ? 'bg-amber-500 text-indigo-950 shadow-md' : 'text-indigo-200 hover:text-white'}`}
               >
                 RO
               </button>
               <button 
                 onClick={() => setLang("en")} 
-                className={`px-2 py-1 rounded-lg text-[10px] font-black transition-all ${lang === 'en' ? 'bg-amber-400 text-amber-950 shadow-md' : 'text-indigo-200 hover:text-white'}`}
+                className={`px-3 py-1 rounded-lg text-[11px] font-black transition-all ${lang === 'en' ? 'bg-amber-500 text-indigo-950 shadow-md' : 'text-indigo-200 hover:text-white'}`}
               >
                 EN
               </button>
@@ -992,20 +1027,21 @@ export default function App() {
 
             <button
               onClick={() => {
-                if (parentPin) setView("pin_entry");
-                else setView("parent");
+                if (parentPin) {
+                  setView("pin_entry");
+                } else {
+                  setIsParentAuthorized(true);
+                  setView("parent");
+                }
               }}
-              className="p-2.5 bg-indigo-800/80 hover:bg-indigo-700 rounded-full transition-colors flex items-center justify-center border-2 border-indigo-500 shadow-inner"
+              className="p-2 bg-indigo-800/80 hover:bg-indigo-600 rounded-full transition-all flex items-center justify-center border-2 border-indigo-400/40 shadow-lg hover:scale-110"
               title="Zona Părinților"
             >
-              <Lock size={20} className="text-indigo-200" />
+              <span className="text-lg">🐾</span>
             </button>
-            <div className="flex items-center gap-2 bg-gradient-to-r from-amber-900/60 to-orange-900/60 border-2 border-amber-500/50 px-4 py-2 rounded-full shadow-[0_0_15px_rgba(245,158,11,0.3)] backdrop-blur-sm">
-              <Star
-                className="text-amber-400 fill-amber-400 animate-pulse"
-                size={24}
-              />
-              <span className="text-xl font-black text-amber-100">
+            <div className="flex items-center gap-2 bg-amber-900/40 border-2 border-amber-500/50 px-4 py-1.5 rounded-2xl backdrop-blur-sm shadow-lg">
+              <span className="text-xl drop-shadow-md">🪙</span>
+              <span className="text-xl font-black text-amber-400">
                 {points}
               </span>
             </div>
@@ -1132,80 +1168,75 @@ export default function App() {
 // ==========================================
 function MainMenu({ setView, petState, t }) {
   return (
-    <div className="flex flex-col items-center justify-center space-y-8 animate-fade-in mt-6 relative z-10">
-      <div className="relative">
-        <div className="absolute inset-0 bg-amber-400 blur-3xl opacity-30 rounded-full animate-pulse-glow"></div>
-        <div className="text-9xl animate-float drop-shadow-[0_10px_15px_rgba(0,0,0,0.5)] relative z-10">
-          😼
+    <div className="flex flex-col items-center justify-center space-y-12 animate-fade-in mt-12 relative z-10">
+      {/* Cardul Central cu Pisicuța */}
+      <div className="relative w-full max-w-2xl px-4 pt-20">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-4 w-48 h-48 z-20 pointer-events-none">
+          <img 
+            src="/teo_virtual_pet.png" 
+            alt="Cute Kitten" 
+            className="w-full h-full object-contain animate-float drop-shadow-2xl"
+          />
+        </div>
+        <div className="bg-indigo-900/40 backdrop-blur-xl border-[3px] border-indigo-300/30 rounded-[3rem] p-10 pt-24 shadow-[0_20px_50px_rgba(0,0,0,0.5)] text-center relative overflow-hidden ring-1 ring-white/10">
+          <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none"></div>
+          <h2 className="text-4xl sm:text-5xl font-black text-amber-300 drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)] mb-6 tracking-tight">
+            {t("menu_welcome")}
+          </h2>
+          <div className="bg-slate-900/60 rounded-3xl p-6 border border-white/5 shadow-inner">
+            <p className="text-base sm:text-lg text-indigo-100 font-medium leading-relaxed max-w-md mx-auto">
+              {t("menu_subtitle")}
+            </p>
+          </div>
         </div>
       </div>
 
-      <div className="text-center space-y-4 max-w-2xl">
-        <h2 className="text-5xl sm:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-b from-amber-100 to-amber-400 drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)] animate-wiggle pb-2">
-          {t("menu_welcome")}
-        </h2>
-        <p className="text-xl text-indigo-100 font-bold text-center bg-indigo-950/60 p-6 rounded-[2rem] backdrop-blur-md border-2 border-indigo-500/50 shadow-2xl leading-relaxed">
-          {t("menu_subtitle")}
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-3xl mt-12">
+      {/* Grid Butoane Gem */}
+      <div className="grid grid-cols-2 gap-8 w-full max-w-2xl px-4 pb-20">
         <button
           onClick={() => setView("map")}
-          className="flex flex-col items-center p-8 bg-gradient-to-b from-emerald-500 to-teal-700 border-4 border-emerald-300 rounded-[2.5rem] transition-all shadow-[0_12px_0_0_#042f2e] hover:shadow-[0_18px_0_0_#042f2e] hover:-translate-y-2 active:translate-y-3 active:shadow-none group relative overflow-hidden"
+          className="glossy-button flex flex-col items-center justify-center aspect-square rounded-full bg-gradient-to-b from-emerald-400 to-teal-700 border-4 border-emerald-300 group"
         >
-          <div className="absolute top-0 right-0 p-4 opacity-20 text-6xl group-hover:rotate-45 transition-transform duration-500">
-            🍃
+          <div className="bg-emerald-900/40 p-4 rounded-full mb-2 group-hover:scale-110 transition-transform">
+            <Play size={40} className="fill-white text-white translate-x-1" />
           </div>
-          <div className="bg-amber-100 p-6 rounded-full mb-4 group-hover:scale-110 transition-transform shadow-[inset_0_4px_10px_rgba(0,0,0,0.2)] text-emerald-600 border-4 border-emerald-400 relative z-10">
-            <Play size={48} className="ml-2 fill-emerald-600" />
-          </div>
-          <span className="text-3xl font-black text-emerald-50 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)] relative z-10">
+          <span className="text-xl font-black text-white drop-shadow-md">
             {t("btn_explore")}
           </span>
         </button>
 
         <button
           onClick={() => setView("homework")}
-          className="flex flex-col items-center p-8 bg-gradient-to-b from-amber-500 to-orange-700 border-4 border-amber-300 rounded-[2.5rem] transition-all shadow-[0_12px_0_0_#7c2d12] hover:shadow-[0_18px_0_0_#7c2d12] hover:-translate-y-2 active:translate-y-3 active:shadow-none group relative overflow-hidden"
+          className="glossy-button flex flex-col items-center justify-center aspect-square rounded-full bg-gradient-to-b from-amber-400 to-orange-700 border-4 border-amber-200 group"
         >
-          <div className="absolute top-0 right-0 p-4 opacity-20 text-6xl group-hover:rotate-45 transition-transform duration-500">
-            📜
+          <div className="bg-amber-900/40 p-4 rounded-full mb-2 group-hover:scale-110 transition-transform">
+            <BookOpen size={40} className="text-white" />
           </div>
-          <div className="bg-amber-100 p-6 rounded-full mb-4 group-hover:scale-110 transition-transform shadow-[inset_0_4px_10px_rgba(0,0,0,0.2)] text-orange-600 border-4 border-orange-400 relative z-10">
-            <BookOpen size={48} className="fill-orange-600 text-orange-600" />
-          </div>
-          <span className="text-3xl font-black text-amber-50 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)] relative z-10 text-center">
+          <span className="text-xl font-black text-white drop-shadow-md">
             {t("btn_missions")}
           </span>
         </button>
 
         <button
           onClick={() => setView("shop")}
-          className="flex flex-col items-center p-8 bg-gradient-to-b from-fuchsia-600 to-purple-800 border-4 border-fuchsia-300 rounded-[2.5rem] transition-all shadow-[0_12px_0_0_#4a044e] hover:shadow-[0_18px_0_0_#4a044e] hover:-translate-y-2 active:translate-y-3 active:shadow-none group relative overflow-hidden"
+          className="glossy-button flex flex-col items-center justify-center aspect-square rounded-full bg-gradient-to-b from-purple-500 to-indigo-800 border-4 border-purple-300 group"
         >
-          <div className="absolute top-0 right-0 p-4 opacity-20 text-6xl group-hover:-rotate-12 transition-transform duration-500">
-            💎
+          <div className="bg-purple-900/40 p-4 rounded-full mb-2 group-hover:scale-110 transition-transform">
+            <Gem size={40} className="text-white fill-white/20" />
           </div>
-          <div className="bg-amber-100 p-6 rounded-full mb-4 group-hover:scale-110 transition-transform shadow-[inset_0_4px_10px_rgba(0,0,0,0.2)] text-purple-600 border-4 border-purple-400 relative z-10">
-            <ShoppingCart size={48} className="fill-purple-600" />
-          </div>
-          <span className="text-3xl font-black text-fuchsia-50 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)] relative z-10">
+          <span className="text-xl font-black text-white drop-shadow-md">
             {t("btn_treasures")}
           </span>
         </button>
 
         <button
           onClick={() => setView("pet")}
-          className="flex flex-col items-center p-8 bg-gradient-to-b from-rose-400 to-pink-600 border-4 border-pink-300 rounded-[2.5rem] transition-all shadow-[0_12px_0_0_#be123c] hover:shadow-[0_18px_0_0_#be123c] hover:-translate-y-2 active:translate-y-3 active:shadow-none group relative overflow-hidden"
+          className="glossy-button flex flex-col items-center justify-center aspect-square rounded-full bg-gradient-to-b from-rose-400 to-pink-700 border-4 border-rose-300 group"
         >
-          <div className="absolute top-0 right-0 p-4 opacity-20 text-6xl group-hover:rotate-12 transition-transform duration-500">
-            🐾
+          <div className="bg-rose-900/40 p-4 rounded-full mb-2 group-hover:scale-110 transition-transform">
+            <span className="text-4xl text-white">🐾</span>
           </div>
-          <div className="bg-amber-100 p-6 rounded-full mb-4 group-hover:scale-110 transition-transform shadow-[inset_0_4px_10px_rgba(0,0,0,0.2)] text-pink-600 border-4 border-pink-400 relative z-10">
-            <span className="text-5xl">🐾</span>
-          </div>
-          <span className="text-3xl font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)] relative z-10">
+          <span className="text-xl font-black text-white drop-shadow-md text-center px-4 leading-tight">
             {t("btn_pet")} {petState.name}
           </span>
         </button>
@@ -1213,6 +1244,7 @@ function MainMenu({ setView, petState, t }) {
     </div>
   );
 }
+
 
 // ==========================================
 // ECRANUL DE TEME (PENTRU COPIL)
