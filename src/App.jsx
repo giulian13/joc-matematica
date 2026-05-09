@@ -1303,6 +1303,9 @@ function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setM
     e.preventDefault();
     if (!answer && answer !== "0") return;
 
+    // Ascundem tastatura pe mobil
+    if (inputRef.current) inputRef.current.blur();
+
     const numAnswer = parseInt(answer, 10);
 
     if (numAnswer === problem.answer) {
@@ -1388,7 +1391,7 @@ function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setM
               <div className="w-10"></div>
             </div>
 
-            <div className="text-amber-50 font-black drop-shadow-[0_5px_10px_rgba(0,0,0,0.6)] tracking-wider transition-all duration-500 text-7xl animate-float">
+            <div className="text-amber-50 font-black drop-shadow-[0_5px_10px_rgba(0,0,0,0.6)] tracking-wider transition-all duration-500 text-7xl">
               {problem.text} = ?
             </div>
 
@@ -1461,7 +1464,18 @@ function ShopScreen({
   const handleBuy = (item) => {
     if (points >= item.cost) {
       setPoints((prev) => prev - item.cost);
-      setInventory((prev) => [...prev, { ...item, purchaseDate: new Date() }]);
+      setInventory((prev) => {
+        const existingIndex = prev.findIndex((i) => i.id === item.id);
+        if (existingIndex !== -1) {
+          const newInv = [...prev];
+          newInv[existingIndex] = {
+            ...newInv[existingIndex],
+            quantity: (newInv[existingIndex].quantity || 1) + 1,
+          };
+          return newInv;
+        }
+        return [...prev, { ...item, quantity: 1, purchaseDate: new Date() }];
+      });
       addHistory(`Ai cumpărat: ${item.name}`, -item.cost, "spend");
     } else {
       alert(
@@ -1558,6 +1572,11 @@ function ShopScreen({
                     </div>
                     <span className="font-black text-slate-700 text-base leading-tight">
                       {item.name}
+                      {item.quantity > 1 && (
+                        <span className="ml-2 text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded-lg text-xs">
+                          x{item.quantity}
+                        </span>
+                      )}
                     </span>
                   </div>
                 ))}
@@ -1656,7 +1675,15 @@ function ParentDashboard({
   };
 
   const handleUseInventoryItem = (indexToRemove, itemName) => {
-    setInventory((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+    setInventory((prev) => {
+      const newInv = [...prev];
+      const item = newInv[indexToRemove];
+      if (item.quantity > 1) {
+        newInv[indexToRemove] = { ...item, quantity: item.quantity - 1 };
+        return newInv;
+      }
+      return prev.filter((_, idx) => idx !== indexToRemove);
+    });
     addHistory(`Premiu folosit/revendicat: ${itemName}`, 0, "info");
   };
 
@@ -1968,7 +1995,12 @@ function ParentDashboard({
                     <div key={idx} className="bg-white p-5 rounded-[2.5rem] border-4 border-emerald-50 flex items-center justify-between shadow-sm">
                       <div className="flex items-center gap-4">
                         <span className="text-4xl">{item.icon}</span>
-                        <span className="font-black text-slate-800">{item.name}</span>
+                        <div className="flex flex-col">
+                          <span className="font-black text-slate-800 leading-tight">{item.name}</span>
+                          {item.quantity > 1 && (
+                            <span className="text-xs font-bold text-indigo-500">Cantitate: {item.quantity}</span>
+                          )}
+                        </div>
                       </div>
                       <button onClick={() => handleUseInventoryItem(idx, item.name)} className="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-2xl font-black shadow-[0_4px_0_0_#065f46] text-sm">Folosit</button>
                     </div>
