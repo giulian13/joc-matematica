@@ -1021,19 +1021,19 @@ function ShopScreen({
             {shopItems.map((item) => (
               <div
                 key={item.id}
-                className="bg-white border-4 border-purple-100 rounded-[2rem] p-5 flex items-start gap-4 hover:border-purple-300 hover:shadow-xl hover:-translate-y-2 transition-all transform group"
+                className="bg-white border-4 border-purple-100 rounded-[2rem] p-5 flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 hover:border-purple-300 hover:shadow-xl hover:-translate-y-2 transition-all transform group"
               >
-                <div className="text-6xl bg-gradient-to-br from-purple-100 to-pink-100 p-4 rounded-3xl group-hover:scale-110 group-hover:rotate-6 transition-transform shadow-inner">
+                <div className="text-6xl bg-gradient-to-br from-purple-100 to-pink-100 p-4 rounded-3xl group-hover:scale-110 group-hover:rotate-6 transition-transform shadow-inner shrink-0">
                   {item.icon}
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 w-full">
                   <h3 className="font-black text-xl text-slate-800">
                     {item.name}
                   </h3>
                   <p className="text-sm text-slate-500 mt-2 font-medium line-clamp-2">
                     {item.description}
                   </p>
-                  <div className="mt-5 flex items-center justify-between">
+                  <div className="mt-5 flex flex-wrap items-center justify-center sm:justify-between gap-3 w-full">
                     <span className="flex items-center gap-1 font-black text-yellow-600 bg-yellow-100 border-2 border-yellow-200 px-3 py-1.5 rounded-xl shadow-sm group-hover:animate-pop">
                       <Star
                         size={20}
