@@ -389,6 +389,22 @@ function PetScreen({ petState, setPetState, points, setPoints, addHistory, setVi
       newJoy = Math.min(100, newJoy + 40);
       newEnergy = Math.max(0, newEnergy - 20);
       message = `Te-ai jucat cu ${petState.name}! Este foarte fericit.`;
+      
+      const playImg = Math.random() > 0.5 ? 'play1' : 'play2';
+      const playUntil = Date.now() + 5 * 60 * 1000;
+      
+      setPetState({
+        ...petState,
+        food: newFood,
+        joy: newJoy,
+        energy: newEnergy,
+        lastInteraction: Date.now(),
+        playUntil,
+        playImage: playImg
+      });
+      addHistory(message, -cost, "spend");
+      setPoints((prev) => prev - cost);
+      return;
     } else if (actionType === "sleep") {
       cost = 0;
       setPetState({
@@ -425,6 +441,17 @@ function PetScreen({ petState, setPetState, points, setPoints, addHistory, setVi
     });
   };
 
+  const getPetImage = () => {
+    if (petState.isDead) return "/virtual_pet_sad.png";
+    if (isSleeping) return "/virtual_pet_sleepy.png";
+    if (petState.playUntil && now < petState.playUntil) {
+      return petState.playImage === 'play1' ? "/virtual_pet_play1.png" : "/virtual_pet_play2.png";
+    }
+    if (petState.joy > 90) return "/virtual_pet_happy.png";
+    if (petState.joy < 30) return "/virtual_pet_sad.png";
+    return "/virtual_pet_walk.png";
+  };
+
   return (
     <div className="bg-white/90 backdrop-blur-md rounded-[3rem] shadow-2xl border-4 border-white overflow-hidden mt-6 relative z-10 max-w-xl mx-auto animate-fade-in p-8 text-center">
       <div className="flex justify-between items-center mb-6">
@@ -439,7 +466,11 @@ function PetScreen({ petState, setPetState, points, setPoints, addHistory, setVi
 
       <div className="flex justify-center mb-8 relative">
         <div className="relative">
-          <img src="/teo_virtual_pet.png" alt="Teo Virtual Pet" className={`w-64 h-64 object-contain transition-all duration-1000 ${petState.isDead ? 'opacity-40 grayscale contrast-125 sepia blur-[1px]' : isSleeping ? 'opacity-70 grayscale' : (petState.joy > 70 ? 'animate-float' : 'animate-wiggle')}`} />
+          <img 
+            src={getPetImage()} 
+            alt={`${petState.name} Virtual Pet`} 
+            className={`w-64 h-64 object-contain transition-all duration-1000 ${petState.isDead ? 'opacity-40 grayscale contrast-125 sepia blur-[1px]' : isSleeping ? 'opacity-90' : (petState.joy > 70 ? 'animate-float' : 'animate-wiggle')}`} 
+          />
           {isSleeping && !petState.isDead && (
             <div className="absolute top-0 right-0 animate-bounce text-4xl">💤</div>
           )}
@@ -529,7 +560,7 @@ export default function App() {
   const [maxLevel, setMaxLevel] = useState(1);
   const [levelProgress, setLevelProgress] = useState(0);
   const [currentPlayingLevel, setCurrentPlayingLevel] = useState(1);
-  const [petState, setPetState] = useState({ name: "Teo", food: 100, joy: 100, energy: 100, lastInteraction: Date.now() });
+  const [petState, setPetState] = useState({ name: "Teo", food: 100, joy: 100, energy: 100, lastInteraction: Date.now(), playUntil: null, playImage: null });
   const [parentPin, setParentPin] = useState(null);
   const [resetPinRequested, setResetPinRequested] = useState(false);
   const [analytics, setAnalytics] = useState({
@@ -618,7 +649,7 @@ export default function App() {
               // Actualizarea în Firebase se va face prin useEffect-ul de salvare
             }
             
-            let loadedPet = data.petState ?? { name: "Teo", food: 100, joy: 100, energy: 100, lastInteraction: Date.now() };
+            let loadedPet = data.petState ?? { name: "Teo", food: 100, joy: 100, energy: 100, lastInteraction: Date.now(), playUntil: null, playImage: null };
             const now = Date.now();
             
             if (loadedPet.sleepUntil && now >= loadedPet.sleepUntil) {
@@ -646,7 +677,7 @@ export default function App() {
             setHomework([]);
             setMaxLevel(1);
             setLevelProgress(0);
-            setPetState({ name: "Teo", food: 100, joy: 100, energy: 100, lastInteraction: Date.now() });
+            setPetState({ name: "Teo", food: 100, joy: 100, energy: 100, lastInteraction: Date.now(), playUntil: null, playImage: null });
             setParentPin(null);
           }
           isDataLoaded.current = true;
