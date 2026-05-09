@@ -449,7 +449,10 @@ function PetScreen({ petState, setPetState, points, setPoints, addHistory, setVi
     }
     if (petState.joy > 90) return "/virtual_pet_happy.png";
     if (petState.joy < 30) return "/virtual_pet_sad.png";
-    return "/virtual_pet_walk.png";
+    
+    // Starea implicită aleatorie: schimbă între cele două poze la fiecare 2 minute
+    const seed = Math.floor(now / (1000 * 60 * 2));
+    return seed % 2 === 0 ? "/virtual_pet_walk.png" : "/teo_virtual_pet.png";
   };
 
   return (
