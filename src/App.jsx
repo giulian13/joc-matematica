@@ -788,8 +788,19 @@ export default function App() {
               const foodDegrade = Math.floor(hoursPassed * 8); // 8% pe oră
               const joyDegrade = Math.floor(hoursPassed * 10); // 10% pe oră
               
-              // Energia scade când e treaz, crește când doarme
-              let energyChange = -Math.floor(hoursPassed * 12); 
+              // Calculăm câte din orele trecute au fost "ore de zi" (07:00 - 00:00)
+              // pentru a nu scădea energia noaptea conform cerinței utilizatorului
+              let dayHours = 0;
+              if (!loadedPet.sleepUntil) {
+                for (let i = 0; i < hoursPassed; i += 0.5) { // Verificăm la fiecare 30 min
+                  const checkTime = new Date(loadedPet.lastInteraction + i * 3600000);
+                  const h = checkTime.getHours();
+                  if (h >= 7) dayHours += 0.5;
+                }
+              }
+              
+              const energyHours = loadedPet.sleepUntil ? hoursPassed : Math.min(hoursPassed, dayHours);
+              let energyChange = -Math.floor(energyHours * 12); 
               if (loadedPet.sleepUntil) {
                 energyChange = Math.floor(hoursPassed * 400); // Se încarcă în ~15 min
               }
