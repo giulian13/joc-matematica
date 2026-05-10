@@ -57,7 +57,7 @@ import {
   signInWithPopup,
   sendPasswordResetEmail,
 } from "firebase/auth";
-import { getFirestore, doc, setDoc, onSnapshot, collection, getDocs, query, updateDoc } from "firebase/firestore";
+import { getFirestore, doc, setDoc, onSnapshot, collection, getDocs, query, updateDoc, collectionGroup, where } from "firebase/firestore";
 
 const getFirebaseConfig = () => {
   // 1. Mediul Canvas (pentru testare aici)
@@ -832,11 +832,26 @@ export default function App() {
         "gameData",
         "state",
       );
+      // Salvăm starea detaliată a jocului
       setDoc(
         docRef,
         { points, history, inventory, shopItems, homework, maxLevel, levelProgress, petState, parentPin, resetPinRequested, analytics },
         { merge: true },
-      ).catch((err) => console.error("Eroare Firebase la salvare:", err));
+      ).catch((err) => console.error("Eroare Firebase la salvare (state):", err));
+
+      // Salvăm un index al utilizatorului pentru Admin Dashboard
+      const userIndexRef = doc(db, "artifacts", APP_ID, "users", user.uid);
+      setDoc(
+        userIndexRef,
+        { 
+          email: user.email, 
+          points: points, 
+          name: petState?.name || "Copil", 
+          lastActive: new Date().toISOString(),
+          id: user.uid
+        },
+        { merge: true }
+      ).catch((err) => console.error("Eroare Firebase la salvare (index):", err));
     }, 1000);
 
     return () => clearTimeout(timer);
@@ -2363,33 +2378,68 @@ function AdminDashboard({ setView, lang, t }) {
   const [searchQuery, setSearchQuery] = useState("");
   
   useEffect(() => {
-    const fetchUsers = async () => {
-      setLoading(true);
-      try {
-        const usersRef = collection(db, "artifacts", APP_ID, "users");
-        const querySnapshot = await getDocs(usersRef);
-        const usersList = [];
-        querySnapshot.forEach((doc) => {
-          usersList.push({ id: doc.id, ...doc.data() });
+  const fetchUsers = async (forceScan = false) => {
+    setLoading(true);
+    try {
+      const usersRef = collection(db, "artifacts", APP_ID, "users");
+      const querySnapshot = await getDocs(usersRef);
+      let usersList = [];
+      querySnapshot.forEach((doc) => {
+        usersList.push({ id: doc.id, ...doc.data() });
+      });
+
+      // Dacă lista e goală sau cerem scanare, folosim fallback-ul collectionGroup pentru a găsi utilizatorii "fantomă"
+      if (usersList.length === 0 || forceScan) {
+        console.log("Scanning for ghost users...");
+        const q = query(collectionGroup(db, "state"));
+        const stateSnapshot = await getDocs(q);
+        const ghostUsers = [];
+        stateSnapshot.forEach((docSnap) => {
+          if (docSnap.ref.path.includes(`artifacts/${APP_ID}/users/`)) {
+            const pathParts = docSnap.ref.path.split('/');
+            const userId = pathParts[pathParts.indexOf('users') + 1];
+            
+            if (!usersList.some(u => u.id === userId) && !ghostUsers.some(u => u.id === userId)) {
+               const data = docSnap.data();
+               ghostUsers.push({
+                 id: userId,
+                 points: data.points || 0,
+                 name: data.petState?.name || "Copil",
+                 email: "Scanat din sub-colecție"
+               });
+            }
+          }
         });
-        setUsers(usersList);
-      } catch (err) {
-        console.error("Error fetching users:", err);
-      } finally {
-        setLoading(false);
+        usersList = [...usersList, ...ghostUsers];
       }
-    };
+
+      setUsers(usersList);
+    } catch (err) {
+      console.error("Error fetching users:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchUsers();
   }, []);
 
   const handleUpdatePoints = async (userId, currentPoints, amount) => {
     try {
+      const newPoints = (currentPoints || 0) + amount;
+      
+      // Update in sub-colecție (starea jocului)
       const userDocRef = doc(db, "artifacts", APP_ID, "users", userId, "gameData", "state");
-      await updateDoc(userDocRef, {
-        points: (currentPoints || 0) + amount
-      });
-      setUsers(prev => prev.map(u => u.id === userId ? { ...u, points: (u.points || 0) + amount } : u));
+      await updateDoc(userDocRef, { points: newPoints });
+      
+      // Update in părinte (indexul utilizatorului)
+      const userIndexRef = doc(db, "artifacts", APP_ID, "users", userId);
+      await setDoc(userIndexRef, { points: newPoints }, { merge: true });
+      
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, points: newPoints } : u));
     } catch (err) {
+      console.error("Error updating points:", err);
       alert("Eroare la actualizarea punctelor!");
     }
   };
@@ -2426,10 +2476,17 @@ function AdminDashboard({ setView, lang, t }) {
               className="w-full p-4 border-2 border-slate-200 rounded-2xl font-bold focus:border-slate-800 outline-none shadow-sm"
             />
           </div>
-          <div className="flex items-end">
+          <div className="flex items-end gap-2">
             <div className="bg-slate-100 px-6 py-4 rounded-2xl font-black text-slate-600">
               {users.length} Utilizatori
             </div>
+            <button 
+              onClick={() => fetchUsers(true)}
+              className="bg-indigo-100 hover:bg-indigo-200 text-indigo-600 px-6 py-4 rounded-2xl font-black text-sm transition-colors"
+              title="Caută utilizatori vechi care nu apar în listă"
+            >
+              Scanare Adâncă
+            </button>
           </div>
         </div>
 
@@ -2455,8 +2512,11 @@ function AdminDashboard({ setView, lang, t }) {
                 ) : (
                   filteredUsers.map((u) => (
                     <tr key={u.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="p-4 border-b text-xs font-mono">{u.id}</td>
-                      <td className="p-4 border-b text-amber-600">{u.points || 0} ⭐</td>
+                      <td className="p-4 border-b">
+                        <div className="font-black text-slate-800">{u.name || "Copil"}</div>
+                        <div className="text-[10px] text-slate-400 font-mono">{u.email || u.id}</div>
+                      </td>
+                      <td className="p-4 border-b text-amber-600 font-black text-lg">{u.points || 0} ⭐</td>
                       <td className="p-4 border-b">
                         <div className="flex gap-2">
                           <button 
