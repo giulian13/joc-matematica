@@ -784,15 +784,41 @@ export default function App() {
             }
 
             const hoursPassed = (now - loadedPet.lastInteraction) / (1000 * 60 * 60);
-            if (hoursPassed > 0.1) {
-              const degrade = Math.floor(hoursPassed * 10);
+            if (hoursPassed > 0.05 && !loadedPet.isDead) {
+              const foodDegrade = Math.floor(hoursPassed * 8); // 8% pe oră
+              const joyDegrade = Math.floor(hoursPassed * 10); // 10% pe oră
+              
+              // Energia scade când e treaz, crește când doarme
+              let energyChange = -Math.floor(hoursPassed * 12); 
+              if (loadedPet.sleepUntil) {
+                energyChange = Math.floor(hoursPassed * 400); // Se încarcă în ~15 min
+              }
+              
+              const newFood = Math.max(0, (loadedPet.food ?? 100) - foodDegrade);
+              const newJoy = Math.max(0, (loadedPet.joy ?? 100) - joyDegrade);
+              const newEnergy = Math.max(0, Math.min(100, (loadedPet.energy ?? 100) + energyChange));
+              
+              // Moarte: dacă ambele (hrană și bucurie) ajung la 0
+              const shouldDie = newFood <= 0 && newJoy <= 0;
+              
               loadedPet = {
                 ...loadedPet,
-                food: Math.max(0, loadedPet.food - degrade),
-                joy: Math.max(0, loadedPet.joy - degrade),
-                energy: loadedPet.sleepUntil ? loadedPet.energy : Math.min(100, loadedPet.energy + Math.floor(hoursPassed * 20)),
-                lastInteraction: now
+                food: newFood,
+                joy: newJoy,
+                energy: newEnergy,
+                lastInteraction: now,
+                isDead: shouldDie
               };
+
+              if (shouldDie) {
+                setPoints(0);
+                addHistory(
+                  lang === "ro" 
+                    ? `Din păcate, ${loadedPet.name} ne-a părăsit din cauza lipsei de îngrijire...` 
+                    : `Unfortunately, ${loadedPet.name} has left us due to lack of care...`,
+                  0, "fail"
+                );
+              }
             }
             setPetState(loadedPet);
           } else {
@@ -803,7 +829,7 @@ export default function App() {
             setHomework([]);
             setMaxLevel(1);
             setLevelProgress(0);
-            setPetState({ name: "Pet", food: 100, joy: 100, energy: 100, lastInteraction: Date.now(), playUntil: null, playImage: null });
+            setPetState({ name: "Pet", food: 100, joy: 100, energy: 100, isDead: false, lastInteraction: Date.now(), playUntil: null, playImage: null });
             setParentPin(null);
           }
           isDataLoaded.current = true;
