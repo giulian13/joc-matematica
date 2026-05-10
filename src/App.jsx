@@ -2377,7 +2377,6 @@ function AdminDashboard({ setView, lang, t }) {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   
-  useEffect(() => {
   const fetchUsers = async (forceScan = false) => {
     setLoading(true);
     try {
