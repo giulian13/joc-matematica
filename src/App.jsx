@@ -1225,53 +1225,61 @@ function MainMenu({ setView, petState, t }) {
         </div>
       </div>
 
-      {/* Grid Butoane Gem */}
-      <div className="grid grid-cols-2 gap-8 w-full max-w-2xl px-4 pb-20">
+      {/* Grid Butoane Premium */}
+      <div className="grid grid-cols-2 gap-6 sm:gap-8 w-full max-w-2xl px-4 pb-20">
         <button
           onClick={() => setView("map")}
-          className="glossy-button flex flex-col items-center justify-center aspect-square rounded-full bg-gradient-to-b from-emerald-400 to-teal-700 border-4 border-emerald-300 group"
+          className="premium-card flex flex-col items-center justify-center aspect-square rounded-[3rem] bg-gradient-to-br from-emerald-400 via-teal-500 to-teal-700 border-4 border-emerald-300/50 shadow-2xl relative group overflow-hidden"
         >
-          <div className="bg-emerald-900/40 p-4 rounded-full mb-2 group-hover:scale-110 transition-transform">
-            <Play size={40} className="fill-white text-white translate-x-1" />
+          <span className="floating-decoration text-7xl top-2 right-2">🗺️</span>
+          <span className="floating-decoration text-5xl bottom-4 left-4" style={{ animationDelay: '1s' }}>🧭</span>
+          <div className="glossy-icon-container p-6 rounded-[2rem] mb-4 group-hover:scale-110 transition-transform relative z-10">
+            <Play size={48} className="fill-white text-white translate-x-1 filter drop-shadow-lg" />
           </div>
-          <span className="text-xl font-black text-white drop-shadow-md">
+          <span className="text-2xl font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] relative z-10">
             {t("btn_explore")}
           </span>
         </button>
 
         <button
           onClick={() => setView("homework")}
-          className="glossy-button flex flex-col items-center justify-center aspect-square rounded-full bg-gradient-to-b from-amber-400 to-orange-700 border-4 border-amber-200 group"
+          className="premium-card flex flex-col items-center justify-center aspect-square rounded-[3rem] bg-gradient-to-br from-amber-300 via-orange-500 to-orange-700 border-4 border-amber-200/50 shadow-2xl relative group overflow-hidden"
         >
-          <div className="bg-amber-900/40 p-4 rounded-full mb-2 group-hover:scale-110 transition-transform">
-            <BookOpen size={40} className="text-white" />
+          <span className="floating-decoration text-7xl top-4 right-4">📜</span>
+          <span className="floating-decoration text-5xl bottom-2 left-6" style={{ animationDelay: '1.5s' }}>✏️</span>
+          <div className="glossy-icon-container p-6 rounded-[2rem] mb-4 group-hover:scale-110 transition-transform relative z-10">
+            <BookOpen size={48} className="text-white filter drop-shadow-lg" />
           </div>
-          <span className="text-xl font-black text-white drop-shadow-md">
+          <span className="text-2xl font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] relative z-10">
             {t("btn_missions")}
           </span>
         </button>
 
         <button
           onClick={() => setView("shop")}
-          className="glossy-button flex flex-col items-center justify-center aspect-square rounded-full bg-gradient-to-b from-purple-500 to-indigo-800 border-4 border-purple-300 group"
+          className="premium-card flex flex-col items-center justify-center aspect-square rounded-[3rem] bg-gradient-to-br from-purple-400 via-indigo-600 to-indigo-900 border-4 border-purple-300/50 shadow-2xl relative group overflow-hidden"
         >
-          <div className="bg-purple-900/40 p-4 rounded-full mb-2 group-hover:scale-110 transition-transform">
-            <Gem size={40} className="text-white fill-white/20" />
+          <span className="floating-decoration text-7xl top-2 right-6">💎</span>
+          <span className="floating-decoration text-5xl bottom-6 left-2" style={{ animationDelay: '0.5s' }}>🪙</span>
+          <div className="glossy-icon-container p-6 rounded-[2rem] mb-4 group-hover:scale-110 transition-transform relative z-10">
+            <Gem size={48} className="text-white fill-white/20 filter drop-shadow-lg" />
           </div>
-          <span className="text-xl font-black text-white drop-shadow-md">
+          <span className="text-2xl font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] relative z-10">
             {t("btn_treasures")}
           </span>
         </button>
 
         <button
           onClick={() => setView("pet")}
-          className="glossy-button flex flex-col items-center justify-center aspect-square rounded-full bg-gradient-to-b from-rose-400 to-pink-700 border-4 border-rose-300 group"
+          className="premium-card flex flex-col items-center justify-center aspect-square rounded-[3rem] bg-gradient-to-br from-rose-400 via-pink-500 to-pink-700 border-4 border-rose-300/50 shadow-2xl relative group overflow-hidden"
         >
-          <div className="bg-rose-900/40 p-4 rounded-full mb-2 group-hover:scale-110 transition-transform">
-            <span className="text-4xl text-white">🐾</span>
+          <span className="floating-decoration text-7xl top-6 right-2">🍖</span>
+          <span className="floating-decoration text-5xl bottom-4 left-6" style={{ animationDelay: '2s' }}>🧶</span>
+          <div className="glossy-icon-container p-6 rounded-[2rem] mb-4 group-hover:scale-110 transition-transform relative z-10">
+            <span className="text-5xl filter drop-shadow-lg">🐾</span>
           </div>
-          <span className="text-xl font-black text-white drop-shadow-md text-center px-4 leading-tight">
-            {t("btn_pet")} {petState.name}
+          <span className="text-2xl font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] relative z-10 text-center px-4 leading-tight">
+            {t("btn_pet")} <br/> {petState.name}
           </span>
         </button>
       </div>
