@@ -1225,10 +1225,17 @@ export default function App() {
       </main>
 
       {user && parentPin === null && !dbLoading && (
-        <PinSetupScreen setParentPin={async (pin) => {
-          const hashed = await hashPin(pin, user.uid);
-          setParentPin(hashed);
-        }} lang={lang} />
+        <PinSetupScreen 
+          onComplete={async (pin, petName) => {
+            const hashed = await hashPin(pin, user.uid);
+            setPetState((prev) => ({
+              ...prev,
+              name: petName
+            }));
+            setParentPin(hashed);
+          }} 
+          lang={lang} 
+        />
       )}
     </div>
   );
@@ -1239,23 +1246,23 @@ export default function App() {
 // ==========================================
 function MainMenu({ setView, petState, t }) {
   return (
-    <div className="flex flex-col items-center justify-center space-y-12 animate-fade-in mt-12 relative z-10">
+    <div className="flex flex-col items-center justify-center space-y-6 sm:space-y-12 animate-fade-in mt-6 sm:mt-12 relative z-10">
       {/* Cardul Central cu Pisicuța */}
-      <div className="relative w-full max-w-2xl px-4 pt-20">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-4 w-48 h-48 z-20 pointer-events-none">
+      <div className="relative w-full max-w-2xl px-4 pt-16 sm:pt-20">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 sm:-translate-y-4 w-36 h-36 sm:w-48 sm:h-48 z-20 pointer-events-none">
           <img 
             src="/teo_virtual_pet.png" 
             alt="Cute Kitten" 
             className="w-full h-full object-contain animate-float drop-shadow-2xl"
           />
         </div>
-        <div className="bg-indigo-900/40 backdrop-blur-xl border-[3px] border-indigo-300/30 rounded-[3rem] p-10 pt-24 shadow-[0_20px_50px_rgba(0,0,0,0.5)] text-center relative overflow-hidden ring-1 ring-white/10">
+        <div className="bg-indigo-900/40 backdrop-blur-xl border-[3px] border-indigo-300/30 rounded-3xl sm:rounded-[3rem] p-5 pt-16 sm:p-10 sm:pt-24 shadow-[0_20px_50px_rgba(0,0,0,0.5)] text-center relative overflow-hidden ring-1 ring-white/10">
           <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none"></div>
-          <h2 className="text-4xl sm:text-5xl font-black text-amber-300 drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)] mb-6 tracking-tight">
+          <h2 className="text-2xl sm:text-5xl font-black text-amber-300 drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)] mb-4 sm:mb-6 tracking-tight">
             {t("menu_welcome")}
           </h2>
-          <div className="bg-slate-900/60 rounded-3xl p-6 border border-white/5 shadow-inner">
-            <p className="text-base sm:text-lg text-indigo-100 font-medium leading-relaxed max-w-md mx-auto">
+          <div className="bg-slate-900/60 rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-white/5 shadow-inner">
+            <p className="text-sm sm:text-lg text-indigo-100 font-medium leading-relaxed max-w-md mx-auto">
               {t("menu_subtitle")}
             </p>
           </div>
@@ -1263,59 +1270,50 @@ function MainMenu({ setView, petState, t }) {
       </div>
 
       {/* Grid Butoane Premium */}
-      <div className="grid grid-cols-2 gap-6 sm:gap-8 w-full max-w-2xl px-4 pb-20">
+      <div className="grid grid-cols-2 gap-4 sm:gap-8 w-full max-w-2xl px-4 pb-20">
         <button
           onClick={() => setView("map")}
-          className="premium-card flex flex-col items-center justify-center aspect-square rounded-[3rem] bg-gradient-to-br from-emerald-400 via-teal-500 to-teal-700 border-4 border-emerald-300/50 shadow-2xl relative group overflow-hidden"
+          className="premium-card flex flex-col items-center justify-center aspect-square rounded-3xl sm:rounded-[3rem] bg-gradient-to-br from-emerald-400 via-teal-500 to-teal-700 border-4 border-emerald-300/50 shadow-2xl relative group overflow-hidden"
         >
-          <span className="floating-decoration text-7xl top-2 right-2">🗺️</span>
-          <span className="floating-decoration text-5xl bottom-4 left-4" style={{ animationDelay: '1s' }}>🧭</span>
-          <div className="glossy-icon-container p-6 rounded-[2rem] mb-4 group-hover:scale-110 transition-transform relative z-10">
-            <Play size={48} className="fill-white text-white translate-x-1 filter drop-shadow-lg" />
+          <div className="glossy-icon-container p-3 sm:p-6 rounded-2xl sm:rounded-[2rem] mb-2 sm:mb-4 group-hover:scale-110 transition-transform relative z-10">
+            <Play size={48} className="w-8 h-8 sm:w-12 sm:h-12 fill-white text-white translate-x-0.5 filter drop-shadow-lg" />
           </div>
-          <span className="text-2xl font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] relative z-10">
+          <span className="text-sm sm:text-2xl font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] relative z-10 text-center px-2 leading-tight">
             {t("btn_explore")}
           </span>
         </button>
 
         <button
           onClick={() => setView("homework")}
-          className="premium-card flex flex-col items-center justify-center aspect-square rounded-[3rem] bg-gradient-to-br from-amber-300 via-orange-500 to-orange-700 border-4 border-amber-200/50 shadow-2xl relative group overflow-hidden"
+          className="premium-card flex flex-col items-center justify-center aspect-square rounded-3xl sm:rounded-[3rem] bg-gradient-to-br from-amber-300 via-orange-500 to-orange-700 border-4 border-amber-200/50 shadow-2xl relative group overflow-hidden"
         >
-          <span className="floating-decoration text-7xl top-4 right-4">📜</span>
-          <span className="floating-decoration text-5xl bottom-2 left-6" style={{ animationDelay: '1.5s' }}>✏️</span>
-          <div className="glossy-icon-container p-6 rounded-[2rem] mb-4 group-hover:scale-110 transition-transform relative z-10">
-            <BookOpen size={48} className="text-white filter drop-shadow-lg" />
+          <div className="glossy-icon-container p-3 sm:p-6 rounded-2xl sm:rounded-[2rem] mb-2 sm:mb-4 group-hover:scale-110 transition-transform relative z-10">
+            <BookOpen size={48} className="w-8 h-8 sm:w-12 sm:h-12 text-white filter drop-shadow-lg" />
           </div>
-          <span className="text-2xl font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] relative z-10">
+          <span className="text-sm sm:text-2xl font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] relative z-10 text-center px-2 leading-tight">
             {t("btn_missions")}
           </span>
         </button>
-
         <button
           onClick={() => setView("shop")}
-          className="premium-card flex flex-col items-center justify-center aspect-square rounded-[3rem] bg-gradient-to-br from-purple-400 via-indigo-600 to-indigo-900 border-4 border-purple-300/50 shadow-2xl relative group overflow-hidden"
+          className="premium-card flex flex-col items-center justify-center aspect-square rounded-3xl sm:rounded-[3rem] bg-gradient-to-br from-purple-400 via-indigo-600 to-indigo-900 border-4 border-purple-300/50 shadow-2xl relative group overflow-hidden"
         >
-          <span className="floating-decoration text-7xl top-2 right-6">💎</span>
-          <span className="floating-decoration text-5xl bottom-6 left-2" style={{ animationDelay: '0.5s' }}>🪙</span>
-          <div className="glossy-icon-container p-6 rounded-[2rem] mb-4 group-hover:scale-110 transition-transform relative z-10">
-            <Gem size={48} className="text-white fill-white/20 filter drop-shadow-lg" />
+          <div className="glossy-icon-container p-3 sm:p-6 rounded-2xl sm:rounded-[2rem] mb-2 sm:mb-4 group-hover:scale-110 transition-transform relative z-10">
+            <Gem size={48} className="w-8 h-8 sm:w-12 sm:h-12 text-white fill-white/20 filter drop-shadow-lg" />
           </div>
-          <span className="text-2xl font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] relative z-10">
+          <span className="text-sm sm:text-2xl font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] relative z-10 text-center px-2 leading-tight">
             {t("btn_treasures")}
           </span>
         </button>
 
         <button
           onClick={() => setView("pet")}
-          className="premium-card flex flex-col items-center justify-center aspect-square rounded-[3rem] bg-gradient-to-br from-rose-400 via-pink-500 to-pink-700 border-4 border-rose-300/50 shadow-2xl relative group overflow-hidden"
+          className="premium-card flex flex-col items-center justify-center aspect-square rounded-3xl sm:rounded-[3rem] bg-gradient-to-br from-rose-400 via-pink-500 to-pink-700 border-4 border-rose-300/50 shadow-2xl relative group overflow-hidden"
         >
-          <span className="floating-decoration text-7xl top-6 right-2">🍖</span>
-          <span className="floating-decoration text-5xl bottom-4 left-6" style={{ animationDelay: '2s' }}>🧶</span>
-          <div className="glossy-icon-container p-6 rounded-[2rem] mb-4 group-hover:scale-110 transition-transform relative z-10">
-            <span className="text-5xl filter drop-shadow-lg">🐾</span>
+          <div className="glossy-icon-container p-3 sm:p-6 rounded-2xl sm:rounded-[2rem] mb-2 sm:mb-4 group-hover:scale-110 transition-transform relative z-10">
+            <span className="text-3xl sm:text-5xl filter drop-shadow-lg">🐾</span>
           </div>
-          <span className="text-2xl font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] relative z-10 text-center px-4 leading-tight">
+          <span className="text-sm sm:text-2xl font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] relative z-10 text-center px-2 leading-tight">
             {t("btn_pet")} <br/> {petState.name}
           </span>
         </button>
@@ -2593,12 +2591,17 @@ function AdminDashboard({ setView, lang, t }) {
 // ECRANE SECURITATE PIN
 // ==========================================
 
-function PinSetupScreen({ setParentPin, lang }) {
+function PinSetupScreen({ onComplete, lang }) {
+  const [petName, setPetName] = useState("");
   const [pin, setPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
   const [error, setError] = useState("");
 
   const handleSave = () => {
+    if (!petName.trim()) {
+      setError(lang === "ro" ? "Numele pisicuței nu poate fi gol!" : "Kitten's name cannot be empty!");
+      return;
+    }
     if (pin.length !== 4) {
       setError(lang === "ro" ? "PIN-ul trebuie să aibă 4 cifre!" : "PIN must be 4 digits!");
       return;
@@ -2607,43 +2610,72 @@ function PinSetupScreen({ setParentPin, lang }) {
       setError(lang === "ro" ? "PIN-urile nu coincid!" : "PINs do not match!");
       return;
     }
-    setParentPin(pin);
+    onComplete(pin, petName.trim());
   };
 
   return (
     <div className="fixed inset-0 z-[100] bg-indigo-950/95 backdrop-blur-xl flex items-center justify-center p-4">
       <div className="bg-white rounded-[3rem] p-8 max-w-sm w-full text-center shadow-2xl border-8 border-amber-400 animate-fade-in relative overflow-hidden">
         <div className="absolute -top-10 -right-10 text-9xl opacity-10 rotate-12 pointer-events-none">😼</div>
-        <div className="text-6xl mb-4 drop-shadow-md">🔐</div>
-        <h2 className="text-3xl font-black text-indigo-900 mb-2">{lang === "ro" ? "Setează PIN Părinte" : "Set Parent PIN"}</h2>
-        <p className="text-slate-500 mb-6 font-bold leading-tight">{lang === "ro" ? "Acest cod va fi necesar pentru a intra în Zona Părinților." : "This code will be required to enter the Parent Zone."}</p>
+        <div className="text-6xl mb-4 drop-shadow-md">🔐🐾</div>
+        <h2 className="text-2xl font-black text-indigo-900 mb-2">{lang === "ro" ? "Prima Configurare" : "First-time Setup"}</h2>
+        <p className="text-slate-500 mb-6 font-bold text-xs leading-tight">
+          {lang === "ro" 
+            ? "Stabilește numele pisicuței tale și PIN-ul de siguranță al părinților!" 
+            : "Set your kitten's name and the safety Parent PIN!"}
+        </p>
         
-        {error && <div className="bg-red-50 text-red-600 p-3 rounded-2xl mb-4 font-black border-2 border-red-200 animate-wiggle">{error}</div>}
+        {error && <div className="bg-red-50 text-red-600 p-3 rounded-2xl mb-4 font-black text-sm border-2 border-red-200 animate-wiggle">{error}</div>}
         
         <div className="space-y-4">
-          <input 
-            type="password" 
-            maxLength={4} 
-            inputMode="numeric"
-            placeholder={lang === "ro" ? "PIN nou (4 cifre)" : "New PIN (4 digits)"}
-            value={pin}
-            onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
-            className="w-full text-center text-3xl p-4 border-4 border-indigo-50 rounded-2xl focus:border-amber-400 outline-none font-black tracking-[0.5em] shadow-inner transition-colors"
-          />
-          <input 
-            type="password" 
-            maxLength={4} 
-            inputMode="numeric"
-            placeholder={lang === "ro" ? "Confirmă PIN" : "Confirm PIN"}
-            value={confirmPin}
-            onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, ""))}
-            className="w-full text-center text-3xl p-4 border-4 border-indigo-50 rounded-2xl focus:border-amber-400 outline-none font-black tracking-[0.5em] shadow-inner transition-colors"
-          />
+          <div>
+            <label className="block text-xs font-bold text-slate-600 mb-1 text-left">
+              {lang === "ro" ? "🐾 Numele pisicuței tale" : "🐾 Your kitten's name"}
+            </label>
+            <input 
+              type="text" 
+              placeholder={lang === "ro" ? "ex: Teo, Miau..." : "e.g. Teo, Meow..."}
+              value={petName}
+              onChange={(e) => setPetName(e.target.value)}
+              className="w-full text-center text-lg p-3 border-4 border-indigo-50 rounded-2xl focus:border-amber-400 outline-none font-bold text-slate-700 shadow-inner transition-colors"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-600 mb-1 text-left">
+              {lang === "ro" ? "🔑 PIN nou Părinte (4 cifre)" : "🔑 New Parent PIN (4 digits)"}
+            </label>
+            <input 
+              type="password" 
+              maxLength={4} 
+              inputMode="numeric"
+              placeholder="••••"
+              value={pin}
+              onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
+              className="w-full text-center text-2xl p-3 border-4 border-indigo-50 rounded-2xl focus:border-amber-400 outline-none font-black tracking-[0.5em] shadow-inner transition-colors"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-600 mb-1 text-left">
+              {lang === "ro" ? "🔑 Confirmă PIN Părinte" : "🔑 Confirm Parent PIN"}
+            </label>
+            <input 
+              type="password" 
+              maxLength={4} 
+              inputMode="numeric"
+              placeholder="••••"
+              value={confirmPin}
+              onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, ""))}
+              className="w-full text-center text-2xl p-3 border-4 border-indigo-50 rounded-2xl focus:border-amber-400 outline-none font-black tracking-[0.5em] shadow-inner transition-colors"
+            />
+          </div>
+
           <button 
             onClick={handleSave}
             className="w-full bg-gradient-to-b from-amber-400 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-white font-black py-4 rounded-2xl shadow-[0_8px_0_0_#92400e] active:translate-y-1 active:shadow-none transition-all text-xl mt-4 border-t-2 border-amber-200"
           >
-            {lang === "ro" ? "Salvează PIN-ul" : "Save PIN"}
+            {lang === "ro" ? "Salvează și Începe" : "Save and Start"}
           </button>
         </div>
       </div>
