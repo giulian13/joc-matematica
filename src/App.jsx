@@ -452,18 +452,18 @@ function PetScreen({ petState, setPetState, points, setPoints, addHistory, setVi
 
     if (actionType === "fish") {
       cost = 20;
-      if (points < cost) return alert(lang === "ro" ? "Nu ai suficiente comori!" : "Not enough treasures!");
+      if (points < cost) return alert(lang === "ro" ? "Nu ai suficiente steluțe!" : "Not enough stars!");
       newFood = Math.min(100, newFood + 30);
       message = lang === "ro" ? `L-ai hrănit pe ${petState.name} cu un pește delicios!` : `You fed ${petState.name} a delicious fish!`;
     } else if (actionType === "dessert") {
       cost = 10;
-      if (points < cost) return alert(lang === "ro" ? "Nu ai suficiente comori!" : "Not enough treasures!");
+      if (points < cost) return alert(lang === "ro" ? "Nu ai suficiente steluțe!" : "Not enough stars!");
       newFood = Math.min(100, newFood + 15);
       newJoy = Math.min(100, newJoy + 5);
       message = lang === "ro" ? `${petState.name} a primit un desert dulce!` : `${petState.name} got a sweet dessert!`;
     } else if (actionType === "play") {
       cost = 30;
-      if (points < cost) return alert(lang === "ro" ? "Nu ai suficiente comori!" : "Not enough treasures!");
+      if (points < cost) return alert(lang === "ro" ? "Nu ai suficiente steluțe!" : "Not enough stars!");
       if (newEnergy < 20) return alert(lang === "ro" ? `${petState.name} e prea obosit pentru a se juca acum!` : `${petState.name} is too tired to play now!`);
       newJoy = Math.min(100, newJoy + 40);
       newEnergy = Math.max(0, newEnergy - 20);
@@ -495,7 +495,7 @@ function PetScreen({ petState, setPetState, points, setPoints, addHistory, setVi
       return;
     } else if (actionType === "revive") {
       cost = 300;
-      if (points < cost) return alert(lang === "ro" ? "Nu ai suficiente comori pentru a-l reînvia!" : "Not enough treasures to revive him!");
+      if (points < cost) return alert(lang === "ro" ? "Nu ai suficiente steluțe pentru a-l reînvia!" : "Not enough stars to revive him!");
       setPetState({
         food: 100, joy: 100, energy: 100, isDead: false, lastInteraction: Date.now(), sleepUntil: null
       });
@@ -567,8 +567,8 @@ function PetScreen({ petState, setPetState, points, setPoints, addHistory, setVi
           <h3 className="text-2xl mb-3 text-red-600 font-black">{lang === "ro" ? `Oh nu... ${petState.name} ne-a părăsit! 😭` : `Oh no... ${petState.name} has left us! 😭`}</h3>
           <p className="text-red-800/80 mb-6 font-medium leading-relaxed">
             {lang === "ro" 
-              ? `A stat prea mult timp fără mâncare. Ai pierdut toate comorile. Ai nevoie de ` 
-              : `${petState.name} stayed too long without food. You lost all treasures. You need `}
+              ? `A stat prea mult timp fără mâncare. Ai pierdut toate steluțele. Ai nevoie de ` 
+              : `${petState.name} stayed too long without food. You lost all stars. You need `}
             <strong className="text-red-700 bg-red-200 px-2 py-1 rounded">300⭐</strong> 
             {lang === "ro" ? " din Pădurea Magică pentru a-l aduce înapoi!" : " from the Magic Forest to bring him back!"}
           </p>
@@ -1108,7 +1108,7 @@ export default function App() {
               <span className="text-lg">🐾</span>
             </button>
             <div className="flex items-center gap-2 bg-amber-900/40 border-2 border-amber-500/50 px-4 py-1.5 rounded-2xl backdrop-blur-sm shadow-lg">
-              <span className="text-xl drop-shadow-md">🪙</span>
+              <span className="text-xl drop-shadow-md">⭐</span>
               <span className="text-xl font-black text-amber-400">
                 {points}
               </span>
@@ -1764,8 +1764,8 @@ function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setM
         setFeedback({
           type: "success",
           message: lang === "ro" 
-            ? `Ai primit ${totalReward} comori. Ai deblocat nivelul următor! 🎉`
-            : `You got ${totalReward} treasures. You unlocked the next level! 🎉`,
+            ? `Ai primit ${totalReward} steluțe. Ai deblocat nivelul următor! 🎉`
+            : `You got ${totalReward} stars. You unlocked the next level! 🎉`,
         });
         setTimeout(() => {
           confetti({ particleCount: 300, spread: 100, origin: { y: 0.3 } });
@@ -1778,15 +1778,15 @@ function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setM
           setFeedback({
             type: "success",
             message: lang === "ro"
-              ? `Corect! Ai primit ${totalReward} comori. (Încă ${pointsLeft} comori necesare)`
-              : `Correct! You got ${totalReward} treasures. (${pointsLeft} more needed)`,
+              ? `Corect! Ai primit ${totalReward} steluțe. (Încă ${pointsLeft} steluțe necesare)`
+              : `Correct! You got ${totalReward} stars. (${pointsLeft} more needed)`,
           });
         } else {
           setFeedback({
             type: "success",
             message: lang === "ro" 
-              ? `Corect! Ai primit ${totalReward} comori.` 
-              : `Correct! You got ${totalReward} treasures.`,
+              ? `Corect! Ai primit ${totalReward} steluțe.` 
+              : `Correct! You got ${totalReward} stars.`,
           });
         }
       }
@@ -1829,19 +1829,6 @@ function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setM
       <div className="bg-amber-50 rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden border-8 border-amber-700/80 transform transition-transform duration-300 relative">
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#8b5cf6_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none"></div>
 
-        {/* Combo Badge */}
-        {streak >= 2 && (
-          <div className="absolute top-24 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-orange-500 to-red-600 text-white font-black text-sm px-5 py-2 rounded-full shadow-[0_4px_15px_rgba(239,68,68,0.5)] border-2 border-amber-200 animate-pulse z-20 flex items-center gap-1.5">
-            <span>🔥</span>
-            <span>Combo x{streak}!</span>
-            {streak >= 3 && (
-              <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded-md font-extrabold">
-                +{streak === 3 ? 2 : streak === 4 ? 3 : 5} ⭐
-              </span>
-            )}
-          </div>
-        )}
-
         <div className="bg-gradient-to-b from-amber-800 to-amber-950 p-8 text-center relative overflow-hidden border-b-8 border-amber-900/50">
           <div className="absolute inset-0 bg-magic-pattern opacity-20"></div>
 
@@ -1858,6 +1845,19 @@ function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setM
               <div className="w-10"></div>
             </div>
 
+            {/* Combo Badge in Natural Layout Flow */}
+            {streak >= 2 && (
+              <div className="mb-6 inline-flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-600 text-white font-black text-sm px-5 py-2 rounded-full shadow-[0_4px_15px_rgba(239,68,68,0.5)] border-2 border-amber-200 animate-pulse justify-center">
+                <span>🔥</span>
+                <span>Combo x{streak}!</span>
+                {streak >= 3 && (
+                  <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded-md font-extrabold">
+                    +{streak === 3 ? 2 : streak === 4 ? 3 : 5} ⭐
+                  </span>
+                )}
+              </div>
+            )}
+
             <div className="text-amber-50 font-black drop-shadow-[0_5px_10px_rgba(0,0,0,0.6)] tracking-wider transition-all duration-500 text-7xl">
               {problem.text} = ?
             </div>
@@ -1867,7 +1867,7 @@ function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setM
                 size={24}
                 className="fill-amber-400 text-amber-400 animate-pulse"
               />
-              {lang === "ro" ? "Recompensă" : "Reward"}: {problem.reward} {lang === "ro" ? "comori" : "treasures"}
+              {lang === "ro" ? "Recompensă" : "Reward"}: {problem.reward} {lang === "ro" ? "steluțe" : "stars"}
             </div>
           </div>
         </div>
