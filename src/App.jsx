@@ -1141,6 +1141,7 @@ export default function App() {
             logError={logError}
             t={t}
             lang={lang}
+            petState={petState}
           />
         )}
         {view === "pet" && (
@@ -1462,11 +1463,11 @@ function HomeworkScreen({ homework, setHomework, t, lang }) {
 // HARTA AVENTURII
 // ==========================================
 const LEVELS = [
-  { id: 1, name: { ro: "Poiana Însorită", en: "Sunny Meadow" }, icon: "🌻", description: { ro: "Începutul aventurii", en: "Start of the adventure" } },
-  { id: 2, name: { ro: "Pădurea de Basm", en: "Fairy Tale Forest" }, icon: "🌲", description: { ro: "Printre copaci fermecați", en: "Among enchanted trees" } },
-  { id: 3, name: { ro: "Peștera Cristalelor", en: "Crystal Cave" }, icon: "💎", description: { ro: "Scântei în întuneric", en: "Sparkles in the dark" } },
-  { id: 4, name: { ro: "Castelul Norilor", en: "Cloud Castle" }, icon: "🏰", description: { ro: "Acolo sus pe cer", en: "High up in the sky" } },
-  { id: 5, name: { ro: "Tărâmul Magic", en: "Magic Land" }, icon: "✨", description: { ro: "Cea mai mare provocare", en: "The ultimate challenge" } },
+  { id: 1, name: { ro: "Poiana Însorită", en: "Sunny Meadow" }, icon: "🌻", description: { ro: "Începutul aventurii", en: "Start of the adventure" }, req: 0 },
+  { id: 2, name: { ro: "Pădurea de Basm", en: "Fairy Tale Forest" }, icon: "🌲", description: { ro: "Printre copaci fermecați", en: "Among enchanted trees" }, req: 150 },
+  { id: 3, name: { ro: "Peștera Cristalelor", en: "Crystal Cave" }, icon: "💎", description: { ro: "Scântei în întuneric", en: "Sparkles in the dark" }, req: 250 },
+  { id: 4, name: { ro: "Castelul Norilor", en: "Cloud Castle" }, icon: "🏰", description: { ro: "Acolo sus pe cer", en: "High up in the sky" }, req: 400 },
+  { id: 5, name: { ro: "Tărâmul Magic", en: "Magic Land" }, icon: "✨", description: { ro: "Cea mai mare provocare", en: "The ultimate challenge" }, req: 600 },
 ];
 
 function MapScreen({ setView, maxLevel, setCurrentPlayingLevel, t, lang }) {
@@ -1488,9 +1489,22 @@ function MapScreen({ setView, maxLevel, setCurrentPlayingLevel, t, lang }) {
             <div key={level.id} className={`flex items-center gap-4 ${index % 2 === 0 ? 'flex-row' : 'flex-row-reverse'}`}>
               <div className="w-1/2 flex justify-end">
                 {index % 2 === 0 && (
-                  <div className={`p-4 rounded-2xl text-right ${isUnlocked ? 'bg-white/90 shadow-xl' : 'bg-slate-800/80 text-slate-400'} border-4 ${isUnlocked ? 'border-amber-400' : 'border-slate-700'}`}>
+                  <div className={`p-4 rounded-2xl text-center ${isUnlocked ? 'bg-white/90 shadow-xl' : 'bg-slate-800/80 text-slate-400'} border-4 ${isUnlocked ? 'border-amber-400' : 'border-slate-700'}`}>
                      <h3 className="font-black text-lg">{level.name[lang]}</h3>
                      <p className="text-sm font-medium hidden sm:block">{level.description[lang]}</p>
+                     <div className="mt-2 flex items-center justify-center">
+                       <span className={`inline-flex items-center gap-1 text-xs font-black px-2.5 py-1 rounded-full shadow-sm ${
+                         isUnlocked 
+                           ? 'bg-emerald-500/20 text-emerald-700 border border-emerald-500/30' 
+                           : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                       }`}>
+                         {isUnlocked ? (
+                           <>{lang === "ro" ? "Deblocat! ✅" : "Unlocked! ✅"}</>
+                         ) : (
+                           <>{lang === "ro" ? `🔒 Necesită ${level.req} ⭐` : `🔒 Requires ${level.req} ⭐`}</>
+                         )}
+                       </span>
+                     </div>
                    </div>
                  )}
                </div>
@@ -1509,9 +1523,22 @@ function MapScreen({ setView, maxLevel, setCurrentPlayingLevel, t, lang }) {
 
                <div className="w-1/2 flex justify-start">
                  {index % 2 !== 0 && (
-                   <div className={`p-4 rounded-2xl text-left ${isUnlocked ? 'bg-white/90 shadow-xl' : 'bg-slate-800/80 text-slate-400'} border-4 ${isUnlocked ? 'border-amber-400' : 'border-slate-700'}`}>
+                   <div className={`p-4 rounded-2xl text-center ${isUnlocked ? 'bg-white/90 shadow-xl' : 'bg-slate-800/80 text-slate-400'} border-4 ${isUnlocked ? 'border-amber-400' : 'border-slate-700'}`}>
                      <h3 className="font-black text-lg">{level.name[lang]}</h3>
                      <p className="text-sm font-medium hidden sm:block">{level.description[lang]}</p>
+                     <div className="mt-2 flex items-center justify-center">
+                       <span className={`inline-flex items-center gap-1 text-xs font-black px-2.5 py-1 rounded-full shadow-sm ${
+                         isUnlocked 
+                           ? 'bg-emerald-500/20 text-emerald-700 border border-emerald-500/30' 
+                           : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                       }`}>
+                         {isUnlocked ? (
+                           <>{lang === "ro" ? "Deblocat! ✅" : "Unlocked! ✅"}</>
+                         ) : (
+                           <>{lang === "ro" ? `🔒 Necesită ${level.req} ⭐` : `🔒 Requires ${level.req} ⭐`}</>
+                         )}
+                       </span>
+                     </div>
                    </div>
                  )}
                </div>
@@ -1529,101 +1556,144 @@ function MapScreen({ setView, maxLevel, setCurrentPlayingLevel, t, lang }) {
 // ==========================================
 // ECRANUL DE JOC (LOGICA MATEMATICĂ)
 // ==========================================
-function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setMaxLevel, levelProgress, setLevelProgress, setView, logError, t, lang }) {
+function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setMaxLevel, levelProgress, setLevelProgress, setView, logError, t, lang, petState }) {
   const [problem, setProblem] = useState(null);
   const [answer, setAnswer] = useState("");
   const [feedback, setFeedback] = useState(null);
+  const [streak, setStreak] = useState(0);
+  const [petCheer, setPetCheer] = useState("");
   const inputRef = useRef(null);
 
   const generateProblem = () => {
-    const type = Math.floor(Math.random() * 6);
     let text = "";
     let correctAnswer = 0;
     let reward = 10;
     let opType = "adunare";
 
-    switch (type) {
-      case 0:
+    // Generăm exercițiile în funcție de nivelul curent selectat (currentPlayingLevel)
+    if (currentPlayingLevel === 1) {
+      // Nivelul 1 - Poiana Însorită: Doar adunări și scăderi simple cu numere foarte mici (0 - 30). Fără rezultate negative.
+      const isAddition = Math.random() > 0.5;
+      if (isAddition) {
         opType = "adunare";
-        const a1 = Math.floor(Math.random() * 900) + 50;
-        const b1 = Math.floor(Math.random() * 900) + 50;
-        text = `${a1} + ${b1}`;
-        correctAnswer = a1 + b1;
-        reward = 10;
-        break;
-      case 1:
+        const a = Math.floor(Math.random() * 21) + 5; // 5 - 25
+        const b = Math.floor(Math.random() * 10) + 1; // 1 - 10
+        text = `${a} + ${b}`;
+        correctAnswer = a + b;
+      } else {
         opType = "scadere";
-        const a2 = Math.floor(Math.random() * 850) + 100;
-        const b2 = Math.floor(Math.random() * (a2 - 20)) + 20;
-        text = `${a2} - ${b2}`;
-        correctAnswer = a2 - b2;
-        reward = 10;
-        break;
-      case 2:
+        const a = Math.floor(Math.random() * 21) + 10; // 10 - 30
+        const b = Math.floor(Math.random() * (a - 1)) + 1; // Întotdeauna rezultat pozitiv și non-zero
+        text = `${a} - ${b}`;
+        correctAnswer = a - b;
+      }
+      reward = 10;
+    } 
+    else if (currentPlayingLevel === 2) {
+      // Nivelul 2 - Pădurea de Basm: Adunări/scăderi până la 100 și înmulțiri simple (tabla înmulțirii cu 1-5).
+      const randType = Math.floor(Math.random() * 3);
+      if (randType === 0) {
+        opType = "adunare";
+        const a = Math.floor(Math.random() * 70) + 15; // 15 - 85
+        const b = Math.floor(Math.random() * 15) + 5;  // 5 - 20
+        text = `${a} + ${b}`;
+        correctAnswer = a + b;
+      } else if (randType === 1) {
+        opType = "scadere";
+        const a = Math.floor(Math.random() * 80) + 20; // 20 - 100
+        const b = Math.floor(Math.random() * (a - 5)) + 5;
+        text = `${a} - ${b}`;
+        correctAnswer = a - b;
+      } else {
         opType = "inmultire";
-        const a3 = Math.floor(Math.random() * 11);
-        const b3 = Math.floor(Math.random() * 11);
-        text = `${a3} x ${b3}`;
-        correctAnswer = a3 * b3;
-        reward = 10;
-        break;
-      case 3:
+        const a = Math.floor(Math.random() * 5) + 1; // 1 - 5
+        const b = Math.floor(Math.random() * 10) + 1; // 1 - 10
+        text = `${a} x ${b}`;
+        correctAnswer = a * b;
+      }
+      reward = 12;
+    } 
+    else if (currentPlayingLevel === 3) {
+      // Nivelul 3 - Peștera Cristalelor: Tabla înmulțirii completă (1-10) și împărțiri simple corespunzătoare.
+      const isMultiplication = Math.random() > 0.5;
+      if (isMultiplication) {
+        opType = "inmultire";
+        const a = Math.floor(Math.random() * 10) + 1;
+        const b = Math.floor(Math.random() * 10) + 1;
+        text = `${a} x ${b}`;
+        correctAnswer = a * b;
+      } else {
         opType = "impartire";
-        const divisor = Math.floor(Math.random() * 10) + 1;
-        const quotient = Math.floor(Math.random() * 11);
+        const divisor = Math.floor(Math.random() * 9) + 2; // 2 - 10
+        const quotient = Math.floor(Math.random() * 10) + 1; // 1 - 10
         const dividend = divisor * quotient;
         text = `${dividend} : ${divisor}`;
         correctAnswer = quotient;
-        reward = 10;
-        break;
-      case 4:
-        opType = "inmultire"; // dominant in expressions here
-        const a4 = Math.floor(Math.random() * 10) + 1;
-        const b4 = Math.floor(Math.random() * 6);
-        const c4 = Math.floor(Math.random() * 6);
-        if (Math.random() > 0.5) {
-          text = `${a4} + ${b4} x ${c4}`;
-          correctAnswer = a4 + b4 * c4;
-        } else {
-          const multResult = a4 * b4;
-          const subtr = Math.floor(Math.random() * multResult);
-          text = `${a4} x ${b4} - ${subtr}`;
-          correctAnswer = multResult - subtr;
-        }
-        reward = 15;
-        break;
-      case 5:
-        opType = "impartire";
-        const subType = Math.floor(Math.random() * 3);
-        const div1 = Math.floor(Math.random() * 10) + 1;
-        if (subType === 0) {
-          const a5 = Math.floor(Math.random() * 5) + 1;
-          const b5 = Math.floor(Math.random() * 5) + 1;
-          const c5 = Math.floor(Math.random() * 4) + 2;
-          text = `(${a5} + ${b5}) x ${c5}`;
-          correctAnswer = (a5 + b5) * c5;
-        } else if (subType === 1) {
-          const a5 = Math.floor(Math.random() * 10) + 5;
-          const b5 = Math.floor(Math.random() * (a5 - 1)) + 1;
-          const c5 = Math.floor(Math.random() * 5) + 2;
-          text = `${c5} x (${a5} - ${b5})`;
-          correctAnswer = c5 * (a5 - b5);
-        } else {
-          const b5 = Math.floor(Math.random() * 10) + 1;
-          const c5 = Math.floor(Math.random() * 10) + 1;
-          const a5 = Math.floor(Math.random() * 20) + (b5 + c5);
-          text = `${a5} - (${b5} + ${c5})`;
-          correctAnswer = a5 - (b5 + c5);
-        }
-        reward = 20;
-        break;
-      default:
-        break;
+      }
+      reward = 15;
+    } 
+    else if (currentPlayingLevel === 4) {
+      // Nivelul 4 - Castelul Norilor: Expresii mixte din 3 termeni fără paranteze (ordine operații).
+      opType = "inmultire";
+      const a = Math.floor(Math.random() * 9) + 2; // 2 - 10
+      const b = Math.floor(Math.random() * 5) + 2; // 2 - 6
+      const c = Math.floor(Math.random() * 10) + 1;
+      const isAddFirst = Math.random() > 0.5;
+      if (isAddFirst) {
+        text = `${c} + ${a} x ${b}`;
+        correctAnswer = c + a * b;
+      } else {
+        const multResult = a * b;
+        const sub = Math.floor(Math.random() * (multResult - 2)) + 1;
+        text = `${a} x ${b} - ${sub}`;
+        correctAnswer = multResult - sub;
+      }
+      reward = 20;
+    } 
+    else {
+      // Nivelul 5 - Tărâmul Magic: Expresii avansate cu paranteze rotunde.
+      opType = "impartire";
+      const subType = Math.floor(Math.random() * 3);
+      if (subType === 0) {
+        const a = Math.floor(Math.random() * 8) + 2;
+        const b = Math.floor(Math.random() * 8) + 2;
+        const c = Math.floor(Math.random() * 5) + 2;
+        text = `(${a} + ${b}) x ${c}`;
+        correctAnswer = (a + b) * c;
+      } else if (subType === 1) {
+        const a = Math.floor(Math.random() * 12) + 5;
+        const b = Math.floor(Math.random() * (a - 2)) + 1;
+        const c = Math.floor(Math.random() * 5) + 2;
+        text = `${c} x (${a} - ${b})`;
+        correctAnswer = c * (a - b);
+      } else {
+        const b = Math.floor(Math.random() * 8) + 2;
+        const c = Math.floor(Math.random() * 8) + 2;
+        const a = Math.floor(Math.random() * 15) + (b + c + 2);
+        text = `${a} - (${b} + ${c})`;
+        correctAnswer = a - (b + c);
+      }
+      reward = 25;
     }
 
     setProblem({ text, answer: correctAnswer, reward, opType });
     setAnswer("");
     setFeedback(null);
+
+    // Mesaj dinamic de încurajare inactiv de la pet
+    const idleMessages = lang === "ro" ? [
+      `„Sunt sigur că știi răspunsul!” spune ${petState?.name || "pisicuța"}. 🐾`,
+      `„Matematica e superputerea ta!” șoptește ${petState?.name || "pisicuța"}. ✨`,
+      `${petState?.name || "Pisicuța"} abia așteaptă să rezolvi provocarea! 💖`,
+      `${petState?.name || "Pisicuța"} se uită la tine plină de speranță! 🐱`
+    ] : [
+      `"I'm sure you know the answer!" says ${petState?.name || "kitten"}. 🐾`,
+      `"Math is your superpower!" whispers ${petState?.name || "kitten"}. ✨`,
+      `${petState?.name || "Kitten"} can't wait for you to solve this! 💖`,
+      `${petState?.name || "Kitten"} is watching you with hope! 🐱`
+    ];
+    setPetCheer(idleMessages[Math.floor(Math.random() * idleMessages.length)]);
+
     if (inputRef.current) inputRef.current.focus();
   };
 
@@ -1647,16 +1717,46 @@ function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setM
         origin: { y: 0.6 }
       });
 
-      setPoints((prev) => prev + problem.reward);
-      addHistory(
-        lang === "ro" 
-          ? `Provocare completată: ${problem.text} = ${problem.answer}`
-          : `Challenge completed: ${problem.text} = ${problem.answer}`,
-        problem.reward,
-        "earn",
-      );
+      // Calculăm combo streak și bonusul de comori
+      const newStreak = streak + 1;
+      setStreak(newStreak);
 
-      const newProgress = levelProgress + problem.reward;
+      let bonus = 0;
+      if (newStreak >= 3) {
+        if (newStreak === 3) bonus = 2;
+        else if (newStreak === 4) bonus = 3;
+        else bonus = 5;
+      }
+
+      const totalReward = problem.reward + bonus;
+      setPoints((prev) => prev + totalReward);
+      
+      const historyMsg = lang === "ro"
+        ? `Provocare completată: ${problem.text} = ${problem.answer}${bonus > 0 ? ` (+${bonus} bonus combo!)` : ""}`
+        : `Challenge completed: ${problem.text} = ${problem.answer}${bonus > 0 ? ` (+${bonus} combo bonus!)` : ""}`;
+      
+      addHistory(historyMsg, totalReward, "earn");
+
+      // Reactia pet-ului la succes
+      if (newStreak >= 3) {
+        setPetCheer(lang === "ro"
+          ? `„Incredibil! Ești în extaz! 🔥 Păstrează ritmul!” miaună ${petState?.name || "pisica"}.`
+          : `"Unbelievable! You are on fire! 🔥 Keep it up!" purrs ${petState?.name || "kitten"}.`
+        );
+      } else {
+        const successMessages = lang === "ro" ? [
+          `„Uau! Sunt extrem de mândru de tine! 🐾😻” miaună de bucurie ${petState?.name || "pisica"}.`,
+          `„Ești un geniu adevărat al matematicii! ⚡” spune ${petState?.name || "pisica"}.`,
+          `„Ieei! Am primit energie din mintea ta sclipitoare!” dansează ${petState?.name || "pisica"}. 🎉`
+        ] : [
+          `"Wow! I am so proud of you! 🐾😻" meows ${petState?.name || "kitten"} with joy.`,
+          `"You are a true math genius! ⚡" says ${petState?.name || "kitten"}.`,
+          `"Yay! I got energy from your brilliant mind!" dances ${petState?.name || "kitten"}. 🎉`
+        ];
+        setPetCheer(successMessages[Math.floor(Math.random() * successMessages.length)]);
+      }
+
+      const newProgress = levelProgress + totalReward;
       const targetPoints = LEVEL_REQ_POINTS[currentPlayingLevel - 1] || Infinity;
 
       if (newProgress >= targetPoints && currentPlayingLevel === maxLevel && maxLevel < 5) {
@@ -1664,8 +1764,8 @@ function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setM
         setFeedback({
           type: "success",
           message: lang === "ro" 
-            ? `Ai primit ${problem.reward} comori. Ai deblocat nivelul următor! 🎉`
-            : `You got ${problem.reward} treasures. You unlocked the next level! 🎉`,
+            ? `Ai primit ${totalReward} comori. Ai deblocat nivelul următor! 🎉`
+            : `You got ${totalReward} treasures. You unlocked the next level! 🎉`,
         });
         setTimeout(() => {
           confetti({ particleCount: 300, spread: 100, origin: { y: 0.3 } });
@@ -1675,16 +1775,18 @@ function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setM
         setLevelProgress(newProgress);
         if (currentPlayingLevel === maxLevel && maxLevel < 5) {
           const pointsLeft = targetPoints - newProgress;
-        setFeedback({
+          setFeedback({
             type: "success",
             message: lang === "ro"
-              ? `Corect! Ai primit ${problem.reward} comori. (Încă ${pointsLeft} comori necesare)`
-              : `Correct! You got ${problem.reward} treasures. (${pointsLeft} more needed)`,
+              ? `Corect! Ai primit ${totalReward} comori. (Încă ${pointsLeft} comori necesare)`
+              : `Correct! You got ${totalReward} treasures. (${pointsLeft} more needed)`,
           });
         } else {
           setFeedback({
             type: "success",
-            message: `Corect! Ai primit ${problem.reward} comori.`,
+            message: lang === "ro" 
+              ? `Corect! Ai primit ${totalReward} comori.` 
+              : `Correct! You got ${totalReward} treasures.`,
           });
         }
       }
@@ -1693,6 +1795,20 @@ function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setM
         generateProblem();
       }, 2500);
     } else {
+      // Greșeala resetează combo-ul
+      setStreak(0);
+      
+      const failMessages = lang === "ro" ? [
+        `„Nu-i nimic, se mai întâmplă! Știu că poți data viitoare!” te îmbrățișează ${petState?.name || "pisica"}. 🤗`,
+        `„Nu renunța! ${petState?.name || "Pisicuța"} crede în tine și te susține! 🐾”`,
+        `„Mai încearcă o dată! Suntem o echipă imbatabilă!” spune ${petState?.name || "pisica"}. 💖`
+      ] : [
+        `"Don't worry, it happens! I know you can do it next time!" hugs you ${petState?.name || "kitten"}. 🤗`,
+        `"Don't give up! ${petState?.name || "Kitten"} believes in you and supports you! 🐾"`,
+        `"Try one more time! We are an unbeatable team!" says ${petState?.name || "kitten"}. 💖`
+      ];
+      setPetCheer(failMessages[Math.floor(Math.random() * failMessages.length)]);
+
       setFeedback({ type: "error", message: lang === "ro" ? `Greșit. Mai încearcă!` : `Wrong. Try again!` });
       logError(problem.opType);
       addHistory(lang === "ro" ? `Ai ratat provocarea: ${problem.text}` : `You missed the challenge: ${problem.text}`, 0, "fail");
@@ -1712,6 +1828,19 @@ function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setM
     <div className="max-w-xl mx-auto mt-6 animate-fade-in relative z-10">
       <div className="bg-amber-50 rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden border-8 border-amber-700/80 transform transition-transform duration-300 relative">
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#8b5cf6_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none"></div>
+
+        {/* Combo Badge */}
+        {streak >= 2 && (
+          <div className="absolute top-24 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-orange-500 to-red-600 text-white font-black text-sm px-5 py-2 rounded-full shadow-[0_4px_15px_rgba(239,68,68,0.5)] border-2 border-amber-200 animate-pulse z-20 flex items-center gap-1.5">
+            <span>🔥</span>
+            <span>Combo x{streak}!</span>
+            {streak >= 3 && (
+              <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded-md font-extrabold">
+                +{streak === 3 ? 2 : streak === 4 ? 3 : 5} ⭐
+              </span>
+            )}
+          </div>
+        )}
 
         <div className="bg-gradient-to-b from-amber-800 to-amber-950 p-8 text-center relative overflow-hidden border-b-8 border-amber-900/50">
           <div className="absolute inset-0 bg-magic-pattern opacity-20"></div>
@@ -1769,6 +1898,24 @@ function GameScreen({ setPoints, addHistory, currentPlayingLevel, maxLevel, setM
             />
           </button>
         </form>
+
+        {/* Pet Cheering Widget */}
+        <div className="px-8 pb-4 bg-amber-50">
+          <div className="flex items-center gap-4 bg-amber-100/50 p-4 rounded-[2rem] border-2 border-amber-600/20 shadow-sm relative overflow-hidden">
+            <div className="text-4xl shrink-0 bg-white p-3 rounded-2xl shadow-md border border-amber-200 animate-bounce">
+              🐱
+            </div>
+            <div className="flex-1">
+              <h4 className="text-xs font-black text-amber-800 uppercase tracking-widest flex items-center gap-1.5">
+                <span>🐾</span>
+                <span>{petState?.name || (lang === "ro" ? "Prietenul Pet" : "Pet Friend")}</span>
+              </h4>
+              <p className="text-sm font-bold text-amber-950/80 italic mt-0.5 leading-relaxed">
+                {petCheer}
+              </p>
+            </div>
+          </div>
+        </div>
 
         {feedback && (
           <div className="px-8 pb-8 bg-amber-50">
