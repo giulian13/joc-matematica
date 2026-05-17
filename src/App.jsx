@@ -916,8 +916,8 @@ export default function App() {
       setAnalytics(prev => {
         const current = prev.dailyTime || {};
         const currentVal = current[today] || 0;
-        // Adăugăm 1 secundă (1/60 dintr-un minut = ~0.02 minute)
-        const newVal = parseFloat((currentVal + 1 / 60).toFixed(2));
+        // Adăugăm exact 1 minut la fiecare 60 de secunde pentru a proteja baza de date de scrieri excesive
+        const newVal = currentVal + 1;
         return {
           ...prev,
           dailyTime: {
@@ -926,7 +926,7 @@ export default function App() {
           }
         };
       });
-    }, 1000); // Actualizăm în timp real la fiecare secundă!
+    }, 60000); // Actualizăm la fiecare 60 de secunde
 
     return () => clearInterval(interval);
   }, [dbLoading]);
